@@ -9,10 +9,19 @@ const benefits = [
   { icon: Code2, text: "Zero compilation errors" },
 ];
 
+import { useAuth } from "@/contexts/AuthContext";
+
 const Auth = () => {
+  const { login, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    window.location.href = "/dashboard";
+    return null;
+  }
+
   const handleGoogleSignIn = () => {
-    // TODO: Implement Google OAuth
-    console.log("Google sign-in clicked");
+    login();
   };
 
   return (
