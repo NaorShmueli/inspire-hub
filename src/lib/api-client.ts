@@ -8,6 +8,7 @@ import type {
   JwtResponse,
   SubscribeRequest,
   StrategyResult,
+  UserCreditsEntity,
 } from "./api-types";
 
 const API_BASE_URL = "http://localhost:5145/api";
@@ -78,8 +79,12 @@ class ApiClient {
       throw new Error(error.detail || error.title || `API Error: ${response.status}`);
     }
 
-    // Handle 202 Accepted (no content)
+    // Handle 202 Accepted (may have content or no content)
     if (response.status === 202) {
+      const text = await response.text();
+      if (text) {
+        return JSON.parse(text) as T;
+      }
       return {} as T;
     }
 
@@ -121,6 +126,11 @@ class ApiClient {
     });
   }
 
+  // Credit balance endpoint
+  async getCreditBalance(): Promise<UserCreditsEntity> {
+    return this.request<UserCreditsEntity>("/conversation/credit/balance");
+  }
+
   // Conversation endpoints
   async startSession(data: StartSessionRequest): Promise<StartSessionResponse> {
     return this.request<StartSessionResponse>("/conversation/start", {
@@ -146,14 +156,20 @@ class ApiClient {
     sessionId: number,
     roundNumber: number,
     data: SubmitAnswersRequest
-  ): Promise<RoundAnalysisModel | void> {
-    return this.request<RoundAnalysisModel | void>(
+  ): Promise<RoundAnalysisModel> {
+    return this.request<RoundAnalysisModel>(
       `/conversation/${sessionId}/followup-answers/${roundNumber}`,
       {
         method: "POST",
         body: JSON.stringify(data),
       }
     );
+  }
+
+  async approveDomain(sessionId: number): Promise<void> {
+    return this.request<void>(`/conversation/${sessionId}/approve-domain`, {
+      method: "POST",
+    });
   }
 
   async getSessionStatus(sessionId: number): Promise<GenerationStatusResponse> {
