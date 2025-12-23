@@ -38,24 +38,28 @@ const Questionnaire = () => {
   const [session, setSession] = useState<ConversationSession | null>(
     location.state?.session || null
   );
-  const [foundationQuestions, setFoundationQuestions] = useState<FoundationQuestion[]>(
-    location.state?.questions || []
-  );
+  const [foundationQuestions, setFoundationQuestions] = useState<
+    FoundationQuestion[]
+  >(location.state?.questions || []);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [inputValue, setInputValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  
+
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
-  const [roundAnalysis, setRoundAnalysis] = useState<RoundAnalysisModel | null>(null);
+  const [roundAnalysis, setRoundAnalysis] = useState<RoundAnalysisModel | null>(
+    null
+  );
   const [confidenceScore, setConfidenceScore] = useState(0);
   const [isFoundationPhase, setIsFoundationPhase] = useState(true);
   const [followupQuestions, setFollowupQuestions] = useState<Question[]>([]);
   const [followupIndex, setFollowupIndex] = useState(0);
   const [showDomainApproval, setShowDomainApproval] = useState(false);
-  const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set());
+  const [expandedDomains, setExpandedDomains] = useState<Set<string>>(
+    new Set()
+  );
 
   // Initialize chat with first question
   useEffect(() => {
@@ -63,18 +67,20 @@ const Questionnaire = () => {
       const welcomeMessage: ChatMessage = {
         id: "welcome",
         type: "system",
-        content: `Welcome to DomForgeAI! Let's design your system architecture for "${session?.projectName || 'your project'}". I'll ask you a series of questions to understand your requirements.`,
+        content: `Welcome to DomForgeAI! Let's design your system architecture for "${
+          session?.projectName || "your project"
+        }". I'll ask you a series of questions to understand your requirements.`,
         timestamp: new Date(),
       };
-      
+
       const firstQuestion = foundationQuestions[0];
       const questionMessage: ChatMessage = {
-        id: `q-${firstQuestion.questionId}`,
+        id: `q-${firstQuestion.question_id}`,
         type: "ai",
-        content: firstQuestion.questionText || "",
+        content: firstQuestion.question || "",
         timestamp: new Date(),
         metadata: {
-          questionId: firstQuestion.questionId,
+          questionId: firstQuestion.question_id,
         },
       };
 
@@ -118,30 +124,30 @@ const Questionnaire = () => {
       content: userAnswer,
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
 
     // Store answer
     const questionKey = isFoundationPhase
-      ? `Q${currentQuestion.questionId}`
-      : `FQ${currentQuestion.questionId}`;
+      ? `Q${currentQuestion.question_id}`
+      : `FQ${currentQuestion.question_id}`;
     const updatedAnswers = { ...answers, [questionKey]: userAnswer };
     setAnswers(updatedAnswers);
 
     if (isFoundationPhase) {
       // Check if more foundation questions
       if (currentQuestionIndex < foundationQuestions.length - 1) {
-        setCurrentQuestionIndex(prev => prev + 1);
+        setCurrentQuestionIndex((prev) => prev + 1);
         const nextQ = foundationQuestions[currentQuestionIndex + 1];
-        
+
         setTimeout(() => {
           const aiMessage: ChatMessage = {
-            id: `q-${nextQ.questionId}`,
+            id: `q-${nextQ.question_id}`,
             type: "ai",
-            content: nextQ.questionText || "",
+            content: nextQ.question || "",
             timestamp: new Date(),
-            metadata: { questionId: nextQ.questionId },
+            metadata: { questionId: nextQ.question_id },
           };
-          setMessages(prev => [...prev, aiMessage]);
+          setMessages((prev) => [...prev, aiMessage]);
         }, 500);
       } else {
         // Submit foundation answers
@@ -150,18 +156,18 @@ const Questionnaire = () => {
     } else {
       // Followup phase
       if (followupIndex < followupQuestions.length - 1) {
-        setFollowupIndex(prev => prev + 1);
+        setFollowupIndex((prev) => prev + 1);
         const nextQ = followupQuestions[followupIndex + 1];
-        
+
         setTimeout(() => {
           const aiMessage: ChatMessage = {
-            id: `fq-${nextQ.questionId}`,
+            id: `fq-${nextQ.question_id}`,
             type: "ai",
-            content: nextQ.questionText || "",
+            content: nextQ.question || "",
             timestamp: new Date(),
-            metadata: { questionId: nextQ.questionId },
+            metadata: { questionId: nextQ.question_id },
           };
-          setMessages(prev => [...prev, aiMessage]);
+          setMessages((prev) => [...prev, aiMessage]);
         }, 500);
       } else {
         // Submit followup answers
@@ -172,9 +178,11 @@ const Questionnaire = () => {
     inputRef.current?.focus();
   };
 
-  const submitFoundationAnswers = async (allAnswers: Record<string, string>) => {
+  const submitFoundationAnswers = async (
+    allAnswers: Record<string, string>
+  ) => {
     setIsSubmitting(true);
-    
+
     // Add processing message
     const processingMessage: ChatMessage = {
       id: "processing-foundation",
@@ -182,16 +190,17 @@ const Questionnaire = () => {
       content: "Analyzing your requirements and identifying domains...",
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, processingMessage]);
+    setMessages((prev) => [...prev, processingMessage]);
 
     try {
-      const response = await apiClient.submitCoreAnswers(
-        Number(sessionId),
-        { answers: allAnswers }
-      );
+      const response = await apiClient.submitCoreAnswers(Number(sessionId), {
+        answers: allAnswers,
+      });
 
       setRoundAnalysis(response);
-      setConfidenceScore(response.roundMetadata.confidenceScoreAfterExpected * 100);
+      setConfidenceScore(
+        response.round_metadata.confidence_score_after_expected * 100
+      );
       setCurrentRound(response.roundNumber);
       setIsFoundationPhase(false);
       setFollowupQuestions(response.questions || []);
@@ -202,39 +211,47 @@ const Questionnaire = () => {
       const analysisMessage: ChatMessage = {
         id: `analysis-${response.roundNumber}`,
         type: "ai",
-        content: `I've analyzed your requirements. Current confidence: ${Math.round(response.roundMetadata.confidenceScoreAfterExpected * 100)}%. ${response.roundMetadata.requiresAnotherRound ? "I need a few more details to refine the architecture." : "We've reached the confidence threshold!"}`,
+        content: `I've analyzed your requirements. Current confidence: ${Math.round(
+          response.round_metadata.confidence_score_after_expected * 100
+        )}%. ${
+          response.round_metadata.requires_another_round
+            ? "I need a few more details to refine the architecture."
+            : "We've reached the confidence threshold!"
+        }`,
         timestamp: new Date(),
         metadata: {
           roundNumber: response.roundNumber,
-          confidenceScore: response.roundMetadata.confidenceScoreAfterExpected * 100,
-          domains: response.updatedDomains || [],
+          confidenceScore:
+            response.round_metadata.confidence_score_after_expected * 100,
+          domains: response.updated_domains || [],
           analysis: response,
         },
       };
-      setMessages(prev => [...prev, analysisMessage]);
+      setMessages((prev) => [...prev, analysisMessage]);
 
       // If threshold reached, show approval UI
-      if (!response.roundMetadata.requiresAnotherRound) {
+      if (!response.round_metadata.requires_another_round) {
         setShowDomainApproval(true);
       } else if (response.questions && response.questions.length > 0) {
         // Add first followup question
         setTimeout(() => {
           const firstFollowup = response.questions![0];
           const followupMessage: ChatMessage = {
-            id: `fq-${firstFollowup.questionId}`,
+            id: `fq-${firstFollowup.question_id}`,
             type: "ai",
-            content: firstFollowup.questionText || "",
+            content: firstFollowup.question || "",
             timestamp: new Date(),
-            metadata: { questionId: firstFollowup.questionId },
+            metadata: { questionId: firstFollowup.question_id },
           };
-          setMessages(prev => [...prev, followupMessage]);
+          setMessages((prev) => [...prev, followupMessage]);
         }, 1000);
       }
     } catch (error) {
       console.error("Failed to submit foundation:", error);
       toast({
         title: "Submission failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        description:
+          error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -244,14 +261,14 @@ const Questionnaire = () => {
 
   const submitFollowupAnswers = async (allAnswers: Record<string, string>) => {
     setIsSubmitting(true);
-    
+
     const processingMessage: ChatMessage = {
       id: `processing-round-${currentRound}`,
       type: "system",
       content: "Refining domain analysis based on your answers...",
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, processingMessage]);
+    setMessages((prev) => [...prev, processingMessage]);
 
     try {
       const response = await apiClient.submitFollowupAnswers(
@@ -261,24 +278,35 @@ const Questionnaire = () => {
       );
 
       setRoundAnalysis(response);
-      setConfidenceScore(response.roundMetadata.confidenceScoreAfterExpected * 100);
+      setConfidenceScore(
+        response.round_metadata.confidence_score_after_expected * 100
+      );
 
       // Add analysis message
       const analysisMessage: ChatMessage = {
         id: `analysis-${response.roundNumber}`,
         type: "ai",
-        content: `Round ${response.roundNumber} complete. Confidence: ${Math.round(response.roundMetadata.confidenceScoreAfterExpected * 100)}%. ${response.roundMetadata.requiresAnotherRound ? "Let me ask a few more questions." : "Domain recognition complete!"}`,
+        content: `Round ${
+          response.roundNumber
+        } complete. Confidence: ${Math.round(
+          response.round_metadata.confidence_score_after_expected * 100
+        )}%. ${
+          response.round_metadata.requires_another_round
+            ? "Let me ask a few more questions."
+            : "Domain recognition complete!"
+        }`,
         timestamp: new Date(),
         metadata: {
           roundNumber: response.roundNumber,
-          confidenceScore: response.roundMetadata.confidenceScoreAfterExpected * 100,
-          domains: response.updatedDomains || [],
+          confidenceScore:
+            response.round_metadata.confidence_score_after_expected * 100,
+          domains: response.updated_domains || [],
           analysis: response,
         },
       };
-      setMessages(prev => [...prev, analysisMessage]);
+      setMessages((prev) => [...prev, analysisMessage]);
 
-      if (response.roundMetadata.requiresAnotherRound) {
+      if (response.round_metadata.requires_another_round) {
         // Continue with more questions
         setCurrentRound(response.roundNumber);
         setFollowupQuestions(response.questions || []);
@@ -289,13 +317,13 @@ const Questionnaire = () => {
           setTimeout(() => {
             const nextQ = response.questions![0];
             const nextMessage: ChatMessage = {
-              id: `fq-${nextQ.questionId}-r${response.roundNumber}`,
+              id: `fq-${nextQ.question_id}-r${response.roundNumber}`,
               type: "ai",
-              content: nextQ.questionText || "",
+              content: nextQ.question || "",
               timestamp: new Date(),
-              metadata: { questionId: nextQ.questionId },
+              metadata: { questionId: nextQ.question_id },
             };
-            setMessages(prev => [...prev, nextMessage]);
+            setMessages((prev) => [...prev, nextMessage]);
           }, 1000);
         }
       } else {
@@ -306,7 +334,8 @@ const Questionnaire = () => {
       console.error("Failed to submit followup:", error);
       toast({
         title: "Submission failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        description:
+          error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -316,18 +345,18 @@ const Questionnaire = () => {
 
   const handleApproveDomain = async () => {
     setIsSubmitting(true);
-    
+
     const approvalMessage: ChatMessage = {
       id: "approving",
       type: "system",
       content: "Starting system generation...",
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, approvalMessage]);
+    setMessages((prev) => [...prev, approvalMessage]);
 
     try {
       await apiClient.approveDomain(Number(sessionId));
-      
+
       toast({
         title: "Domain approved!",
         description: "Redirecting to generation status...",
@@ -338,7 +367,8 @@ const Questionnaire = () => {
       console.error("Failed to approve domain:", error);
       toast({
         title: "Approval failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        description:
+          error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -347,7 +377,7 @@ const Questionnaire = () => {
   };
 
   const toggleDomainExpand = (domainName: string) => {
-    setExpandedDomains(prev => {
+    setExpandedDomains((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(domainName)) {
         newSet.delete(domainName);
@@ -394,7 +424,9 @@ const Questionnaire = () => {
                 <div className="flex items-center gap-2 bg-card border border-border/50 rounded-full px-4 py-2">
                   <Target className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium">
-                    <span className="text-gradient">{Math.round(confidenceScore)}%</span>
+                    <span className="text-gradient">
+                      {Math.round(confidenceScore)}%
+                    </span>
                   </span>
                   <span className="text-xs text-muted-foreground">/ 85%</span>
                 </div>
@@ -402,14 +434,13 @@ const Questionnaire = () => {
             </div>
           </div>
 
-          <Progress 
-            value={progress} 
-            className="h-2"
-          />
+          <Progress value={progress} className="h-2" />
           <div className="flex justify-between text-xs text-muted-foreground mt-2">
             <span>
-              {isFoundationPhase 
-                ? `Question ${currentQuestionIndex + 1} of ${foundationQuestions.length}`
+              {isFoundationPhase
+                ? `Question ${currentQuestionIndex + 1} of ${
+                    foundationQuestions.length
+                  }`
                 : `Confidence threshold: 85%`}
             </span>
             <span>{Math.round(progress)}%</span>
@@ -459,14 +490,15 @@ const Questionnaire = () => {
                   <p className="whitespace-pre-wrap">{message.content}</p>
 
                   {/* Domain Analysis Panel */}
-                  {message.metadata?.domains && message.metadata.domains.length > 0 && (
-                    <DomainAnalysisPanel
-                      domains={message.metadata.domains}
-                      analysis={message.metadata.analysis}
-                      expandedDomains={expandedDomains}
-                      toggleDomainExpand={toggleDomainExpand}
-                    />
-                  )}
+                  {message.metadata?.domains &&
+                    message.metadata.domains.length > 0 && (
+                      <DomainAnalysisPanel
+                        domains={message.metadata.domains}
+                        analysis={message.metadata.analysis}
+                        expandedDomains={expandedDomains}
+                        toggleDomainExpand={toggleDomainExpand}
+                      />
+                    )}
                 </div>
               </motion.div>
             ))}
@@ -492,46 +524,52 @@ const Questionnaire = () => {
               </div>
 
               {/* Domain summary */}
-              {roundAnalysis.updatedDomains && roundAnalysis.updatedDomains.length > 0 && (
-                <div className="mb-4 space-y-2">
-                  <p className="text-sm font-medium">Identified Domains:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {roundAnalysis.updatedDomains.map((domain, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium flex items-center gap-2"
-                      >
-                        <Layers className="w-3 h-3" />
-                        {domain.domainName}
-                        <span className="text-xs opacity-70">
-                          ({domain.estimatedEntities} entities)
+              {roundAnalysis.updated_domains &&
+                roundAnalysis.updated_domains.length > 0 && (
+                  <div className="mb-4 space-y-2">
+                    <p className="text-sm font-medium">Identified Domains:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {roundAnalysis.updated_domains.map((domain, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium flex items-center gap-2"
+                        >
+                          <Layers className="w-3 h-3" />
+                          {domain.domain_name}
+                          <span className="text-xs opacity-70">
+                            ({domain.estimated_entities} entities)
+                          </span>
                         </span>
-                      </span>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Risks warning */}
-              {roundAnalysis.refinedDomainAnalysis?.identifiedRisks && 
-               roundAnalysis.refinedDomainAnalysis.identifiedRisks.length > 0 && (
-                <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="w-4 h-4 text-destructive" />
-                    <span className="text-sm font-medium text-destructive">
-                      Identified Risks
-                    </span>
+              {roundAnalysis.refined_domain_analysis?.identified_risks &&
+                roundAnalysis.refined_domain_analysis.identified_risks.length >
+                  0 && (
+                  <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="w-4 h-4 text-destructive" />
+                      <span className="text-sm font-medium text-destructive">
+                        Identified Risks
+                      </span>
+                    </div>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      {roundAnalysis.refined_domain_analysis.identified_risks.map(
+                        (risk, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-destructive">•</span>
+                            <span>
+                              {risk.risk}: {risk.description}
+                            </span>
+                          </li>
+                        )
+                      )}
+                    </ul>
                   </div>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {roundAnalysis.refinedDomainAnalysis.identifiedRisks.map((risk, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="text-destructive">•</span>
-                        <span>{risk.risk}: {risk.description}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                )}
 
               <div className="flex gap-3">
                 <Button
@@ -621,21 +659,20 @@ function DomainAnalysisPanel({
       </p>
       <div className="space-y-2">
         {domains.map((domain, i) => {
-          const isExpanded = expandedDomains.has(domain.domainName || "");
+          const isExpanded = expandedDomains.has(domain.domain_name || "");
           return (
-            <div
-              key={i}
-              className="rounded-lg bg-secondary/30 overflow-hidden"
-            >
+            <div key={i} className="rounded-lg bg-secondary/30 overflow-hidden">
               <button
-                onClick={() => toggleDomainExpand(domain.domainName || "")}
+                onClick={() => toggleDomainExpand(domain.domain_name || "")}
                 className="w-full flex items-center justify-between p-3 hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-primary" />
-                  <span className="font-medium text-sm">{domain.domainName}</span>
+                  <span className="font-medium text-sm">
+                    {domain.domain_name}
+                  </span>
                   <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                    {domain.estimatedEntities} entities
+                    {domain.estimated_entities} entities
                   </span>
                 </div>
                 {isExpanded ? (
@@ -659,22 +696,25 @@ function DomainAnalysisPanel({
                           {domain.changes}
                         </p>
                       )}
-                      {domain.newProbableEntities && domain.newProbableEntities.length > 0 && (
-                        <div>
-                          <p className="text-xs font-medium mb-1">Probable Entities:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {domain.newProbableEntities.map((entity, j) => (
-                              <span
-                                key={j}
-                                className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded flex items-center gap-1"
-                              >
-                                <Box className="w-3 h-3" />
-                                {entity}
-                              </span>
-                            ))}
+                      {domain.new_probable_entities &&
+                        domain.new_probable_entities.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium mb-1">
+                              Probable Entities:
+                            </p>
+                            <div className="flex flex-wrap gap-1">
+                              {domain.new_probable_entities.map((entity, j) => (
+                                <span
+                                  key={j}
+                                  className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded flex items-center gap-1"
+                                >
+                                  <Box className="w-3 h-3" />
+                                  {entity}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
                   </motion.div>
                 )}
@@ -685,10 +725,10 @@ function DomainAnalysisPanel({
       </div>
 
       {/* Next Round Focus */}
-      {analysis?.nextRoundFocus && analysis.nextRoundFocus.length > 0 && (
+      {analysis?.next_round_focus && analysis.next_round_focus.length > 0 && (
         <div className="mt-3 pt-3 border-t border-border/50">
           <p className="text-xs text-muted-foreground">
-            Next focus: {analysis.nextRoundFocus.join(", ")}
+            Next focus: {analysis.next_round_focus.join(", ")}
           </p>
         </div>
       )}

@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { 
-  Zap, 
-  Plus, 
+import {
+  Zap,
+  Plus,
   FolderOpen,
   Clock,
   CheckCircle2,
   Loader2,
   LogOut,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,19 +52,20 @@ const Dashboard = () => {
         projectName: projectName.trim(),
         projectDescription: projectDescription.trim() || null,
       });
-
+      console.log("Start session response:", response);
       // Navigate to questionnaire with session data
       navigate(`/project/${response.session.sessionId}/questionnaire`, {
-        state: { 
-          session: response.session, 
-          questions: response.foundationQuestions 
+        state: {
+          session: response.session,
+          questions: response.foundationQuestions,
         },
       });
     } catch (error) {
       console.error("Failed to create project:", error);
       toast({
         title: "Failed to create project",
-        description: error instanceof Error ? error.message : "Please try again",
+        description:
+          error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -96,7 +97,7 @@ const Dashboard = () => {
               Dom<span className="text-gradient">Forge</span>AI
             </span>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground hidden sm:block">
               {user?.email}
@@ -119,15 +120,18 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">
-                Welcome back, <span className="text-gradient">{user?.name || "Developer"}</span>
+                Welcome back,{" "}
+                <span className="text-gradient">
+                  {user?.name || "Developer"}
+                </span>
               </h1>
               <p className="text-muted-foreground">
                 Create new architecture packages or continue existing projects
               </p>
             </div>
-            <Button 
-              variant="hero" 
-              size="lg" 
+            <Button
+              variant="hero"
+              size="lg"
               onClick={() => setShowNewProject(true)}
               className="shrink-0"
             >
@@ -144,7 +148,7 @@ const Dashboard = () => {
               className="bg-card border border-border/50 rounded-2xl p-6 space-y-4"
             >
               <h2 className="text-xl font-semibold">Create New Project</h2>
-              
+
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">
@@ -158,7 +162,7 @@ const Dashboard = () => {
                     className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">
                     Description (optional)
@@ -174,8 +178,8 @@ const Dashboard = () => {
               </div>
 
               <div className="flex gap-3 justify-end">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   onClick={() => {
                     setShowNewProject(false);
                     setProjectName("");
@@ -184,8 +188,8 @@ const Dashboard = () => {
                 >
                   Cancel
                 </Button>
-                <Button 
-                  variant="hero" 
+                <Button
+                  variant="hero"
                   onClick={handleCreateProject}
                   disabled={isCreating}
                 >
@@ -208,7 +212,7 @@ const Dashboard = () => {
           {/* Projects List */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Your Projects</h2>
-            
+
             {sessions.length === 0 ? (
               <div className="bg-card/50 border border-border/50 rounded-2xl p-12 text-center">
                 <FolderOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
@@ -216,8 +220,8 @@ const Dashboard = () => {
                 <p className="text-muted-foreground mb-6">
                   Start your first project to generate architecture packages
                 </p>
-                <Button 
-                  variant="hero-outline" 
+                <Button
+                  variant="hero-outline"
                   onClick={() => setShowNewProject(true)}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -238,13 +242,16 @@ const Dashboard = () => {
                       <div className="flex items-center gap-4">
                         {getStatusIcon(session.status)}
                         <div>
-                          <h3 className="font-semibold">{session.projectName}</h3>
+                          <h3 className="font-semibold">
+                            {session.projectName}
+                          </h3>
                           <p className="text-sm text-muted-foreground">
-                            Created {new Date(session.createdAt).toLocaleDateString()}
+                            Created{" "}
+                            {new Date(session.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-4">
                         {session.confidenceScore && (
                           <div className="text-right">
