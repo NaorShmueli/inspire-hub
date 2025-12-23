@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X, Zap, Coins, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { apiClient } from "@/lib/api-client";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -15,6 +17,23 @@ const navLinks = [
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { isAuthenticated, user, logout } = useAuth();
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchCredits = async () => {
+      if (isAuthenticated) {
+        try {
+          const credits = await apiClient.getCreditBalance();
+          setCreditBalance(credits.creditsBalance);
+        } catch (error) {
+          console.error("Failed to fetch credits:", error);
+        }
+      }
+    };
+
+    fetchCredits();
+  }, [isAuthenticated]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass">
@@ -49,13 +68,39 @@ export const Navbar = () => {
             ))}
           </div>
 
-          {/* CTA Button */}
+          {/* Right side - Auth & Credits */}
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/auth">
-              <Button variant="hero" size="default">
-                Get Started
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                {/* Credit Balance */}
+                {creditBalance !== null && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+                    <Coins className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-primary">
+                      {creditBalance}
+                    </span>
+                  </div>
+                )}
+
+                {/* User Menu */}
+                <Link to="/dashboard">
+                  <Button variant="outline" size="sm">
+                    <User className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </Button>
+                </Link>
+
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button variant="hero" size="default">
+                  Get Started
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -92,11 +137,34 @@ export const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
-              <Link to="/auth" onClick={() => setIsOpen(false)}>
-                <Button variant="hero" size="lg" className="w-full mt-2">
-                  Get Started
-                </Button>
-              </Link>
+              
+              {isAuthenticated ? (
+                <>
+                  {creditBalance !== null && (
+                    <div className="flex items-center gap-2 px-4 py-3">
+                      <Coins className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">
+                        {creditBalance} credits
+                      </span>
+                    </div>
+                  )}
+                  <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" size="lg" className="w-full">
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" size="lg" className="w-full" onClick={() => { logout(); setIsOpen(false); }}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Link to="/auth" onClick={() => setIsOpen(false)}>
+                  <Button variant="hero" size="lg" className="w-full mt-2">
+                    Get Started
+                  </Button>
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

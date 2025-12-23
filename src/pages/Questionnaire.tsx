@@ -1,16 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import {
   Zap,
-  ChevronRight,
-  ChevronLeft,
   Loader2,
   Target,
   Brain,
   CheckCircle2,
-  AlertCircle,
-  HelpCircle,
+  AlertTriangle,
+  Send,
+  Sparkles,
+  Layers,
+  Box,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -21,89 +24,212 @@ import type {
   Question,
   RoundAnalysisModel,
   ConversationSession,
+  ChatMessage,
+  UpdatedDomain,
 } from "@/lib/api-types";
-
-type QuestionnairePhase = "foundation" | "followup" | "generating";
 
 const Questionnaire = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const [phase, setPhase] = useState<QuestionnairePhase>("foundation");
   const [session, setSession] = useState<ConversationSession | null>(
     location.state?.session || null
   );
   const [foundationQuestions, setFoundationQuestions] = useState<FoundationQuestion[]>(
     location.state?.questions || []
   );
-  const [followupQuestions, setFollowupQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [inputValue, setInputValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [roundNumber, setRoundNumber] = useState(1);
-  const [confidenceScore, setConfidenceScore] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  
+  // Chat state
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [currentRound, setCurrentRound] = useState(0);
   const [roundAnalysis, setRoundAnalysis] = useState<RoundAnalysisModel | null>(null);
+  const [confidenceScore, setConfidenceScore] = useState(0);
+  const [isFoundationPhase, setIsFoundationPhase] = useState(true);
+  const [followupQuestions, setFollowupQuestions] = useState<Question[]>([]);
+  const [followupIndex, setFollowupIndex] = useState(0);
+  const [showDomainApproval, setShowDomainApproval] = useState(false);
+  const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set());
 
-  const currentQuestions =
-    phase === "foundation" ? foundationQuestions : followupQuestions;
-  const currentQuestion = currentQuestions[currentQuestionIndex];
-  const totalQuestions = currentQuestions.length;
-  const progress = totalQuestions > 0 ? ((currentQuestionIndex + 1) / totalQuestions) * 100 : 0;
+  // Initialize chat with first question
+  useEffect(() => {
+    if (foundationQuestions.length > 0 && messages.length === 0) {
+      const welcomeMessage: ChatMessage = {
+        id: "welcome",
+        type: "system",
+        content: `Welcome to DomForgeAI! Let's design your system architecture for "${session?.projectName || 'your project'}". I'll ask you a series of questions to understand your requirements.`,
+        timestamp: new Date(),
+      };
+      
+      const firstQuestion = foundationQuestions[0];
+      const questionMessage: ChatMessage = {
+        id: `q-${firstQuestion.questionId}`,
+        type: "ai",
+        content: firstQuestion.questionText || "",
+        timestamp: new Date(),
+        metadata: {
+          questionId: firstQuestion.questionId,
+        },
+      };
 
-  // If no session data, redirect to dashboard
+      setMessages([welcomeMessage, questionMessage]);
+    }
+  }, [foundationQuestions, messages.length, session?.projectName]);
+
+  // Redirect if no session
   useEffect(() => {
     if (!session && !sessionId) {
       navigate("/dashboard");
     }
   }, [session, sessionId, navigate]);
 
-  const handleAnswerChange = (value: string) => {
-    const questionKey = phase === "foundation" 
-      ? `Q${(currentQuestion as FoundationQuestion).questionId}`
-      : `FQ${(currentQuestion as Question).questionId}`;
-    setAnswers((prev) => ({ ...prev, [questionKey]: value }));
-  };
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  const getCurrentAnswer = () => {
-    const questionKey = phase === "foundation"
-      ? `Q${(currentQuestion as FoundationQuestion).questionId}`
-      : `FQ${(currentQuestion as Question).questionId}`;
-    return answers[questionKey] || "";
-  };
-
-  const handleNext = () => {
-    if (currentQuestionIndex < totalQuestions - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
+  const getCurrentQuestion = (): FoundationQuestion | Question | null => {
+    if (isFoundationPhase) {
+      return foundationQuestions[currentQuestionIndex] || null;
+    } else {
+      return followupQuestions[followupIndex] || null;
     }
   };
 
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((prev) => prev - 1);
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isSubmitting) return;
+
+    const userAnswer = inputValue.trim();
+    setInputValue("");
+
+    const currentQuestion = getCurrentQuestion();
+    if (!currentQuestion) return;
+
+    // Add user message
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      type: "user",
+      content: userAnswer,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    // Store answer
+    const questionKey = isFoundationPhase
+      ? `Q${currentQuestion.questionId}`
+      : `FQ${currentQuestion.questionId}`;
+    const updatedAnswers = { ...answers, [questionKey]: userAnswer };
+    setAnswers(updatedAnswers);
+
+    if (isFoundationPhase) {
+      // Check if more foundation questions
+      if (currentQuestionIndex < foundationQuestions.length - 1) {
+        setCurrentQuestionIndex(prev => prev + 1);
+        const nextQ = foundationQuestions[currentQuestionIndex + 1];
+        
+        setTimeout(() => {
+          const aiMessage: ChatMessage = {
+            id: `q-${nextQ.questionId}`,
+            type: "ai",
+            content: nextQ.questionText || "",
+            timestamp: new Date(),
+            metadata: { questionId: nextQ.questionId },
+          };
+          setMessages(prev => [...prev, aiMessage]);
+        }, 500);
+      } else {
+        // Submit foundation answers
+        await submitFoundationAnswers(updatedAnswers);
+      }
+    } else {
+      // Followup phase
+      if (followupIndex < followupQuestions.length - 1) {
+        setFollowupIndex(prev => prev + 1);
+        const nextQ = followupQuestions[followupIndex + 1];
+        
+        setTimeout(() => {
+          const aiMessage: ChatMessage = {
+            id: `fq-${nextQ.questionId}`,
+            type: "ai",
+            content: nextQ.questionText || "",
+            timestamp: new Date(),
+            metadata: { questionId: nextQ.questionId },
+          };
+          setMessages(prev => [...prev, aiMessage]);
+        }, 500);
+      } else {
+        // Submit followup answers
+        await submitFollowupAnswers(updatedAnswers);
+      }
     }
+
+    inputRef.current?.focus();
   };
 
-  const handleSubmitFoundation = async () => {
+  const submitFoundationAnswers = async (allAnswers: Record<string, string>) => {
     setIsSubmitting(true);
+    
+    // Add processing message
+    const processingMessage: ChatMessage = {
+      id: "processing-foundation",
+      type: "system",
+      content: "Analyzing your requirements and identifying domains...",
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, processingMessage]);
+
     try {
       const response = await apiClient.submitCoreAnswers(
         Number(sessionId),
-        { answers }
+        { answers: allAnswers }
       );
 
       setRoundAnalysis(response);
-      setFollowupQuestions(response.questions || []);
       setConfidenceScore(response.roundMetadata.confidenceScoreAfterExpected * 100);
-      setRoundNumber(response.roundNumber);
-      setPhase("followup");
-      setCurrentQuestionIndex(0);
+      setCurrentRound(response.roundNumber);
+      setIsFoundationPhase(false);
+      setFollowupQuestions(response.questions || []);
+      setFollowupIndex(0);
       setAnswers({});
 
-      toast({
-        title: "Foundation complete!",
-        description: `Starting domain recognition. Confidence: ${Math.round(response.roundMetadata.confidenceScoreAfterExpected * 100)}%`,
-      });
+      // Add domain analysis message
+      const analysisMessage: ChatMessage = {
+        id: `analysis-${response.roundNumber}`,
+        type: "ai",
+        content: `I've analyzed your requirements. Current confidence: ${Math.round(response.roundMetadata.confidenceScoreAfterExpected * 100)}%. ${response.roundMetadata.requiresAnotherRound ? "I need a few more details to refine the architecture." : "We've reached the confidence threshold!"}`,
+        timestamp: new Date(),
+        metadata: {
+          roundNumber: response.roundNumber,
+          confidenceScore: response.roundMetadata.confidenceScoreAfterExpected * 100,
+          domains: response.updatedDomains || [],
+          analysis: response,
+        },
+      };
+      setMessages(prev => [...prev, analysisMessage]);
+
+      // If threshold reached, show approval UI
+      if (!response.roundMetadata.requiresAnotherRound) {
+        setShowDomainApproval(true);
+      } else if (response.questions && response.questions.length > 0) {
+        // Add first followup question
+        setTimeout(() => {
+          const firstFollowup = response.questions![0];
+          const followupMessage: ChatMessage = {
+            id: `fq-${firstFollowup.questionId}`,
+            type: "ai",
+            content: firstFollowup.questionText || "",
+            timestamp: new Date(),
+            metadata: { questionId: firstFollowup.questionId },
+          };
+          setMessages(prev => [...prev, followupMessage]);
+        }, 1000);
+      }
     } catch (error) {
       console.error("Failed to submit foundation:", error);
       toast({
@@ -116,40 +242,65 @@ const Questionnaire = () => {
     }
   };
 
-  const handleSubmitFollowup = async () => {
+  const submitFollowupAnswers = async (allAnswers: Record<string, string>) => {
     setIsSubmitting(true);
+    
+    const processingMessage: ChatMessage = {
+      id: `processing-round-${currentRound}`,
+      type: "system",
+      content: "Refining domain analysis based on your answers...",
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, processingMessage]);
+
     try {
       const response = await apiClient.submitFollowupAnswers(
         Number(sessionId),
-        roundNumber,
-        { answers, roundeId: roundAnalysis?.roundId }
+        currentRound,
+        { answers: allAnswers, roundeId: roundAnalysis?.roundId }
       );
 
-      if (response && "roundMetadata" in response) {
-        const analysisResponse = response as RoundAnalysisModel;
-        setRoundAnalysis(analysisResponse);
-        setConfidenceScore(analysisResponse.roundMetadata.confidenceScoreAfterExpected * 100);
+      setRoundAnalysis(response);
+      setConfidenceScore(response.roundMetadata.confidenceScoreAfterExpected * 100);
 
-        if (analysisResponse.roundMetadata.requiresAnotherRound) {
-          // Continue with next round
-          setFollowupQuestions(analysisResponse.questions || []);
-          setRoundNumber(analysisResponse.roundNumber);
-          setCurrentQuestionIndex(0);
-          setAnswers({});
+      // Add analysis message
+      const analysisMessage: ChatMessage = {
+        id: `analysis-${response.roundNumber}`,
+        type: "ai",
+        content: `Round ${response.roundNumber} complete. Confidence: ${Math.round(response.roundMetadata.confidenceScoreAfterExpected * 100)}%. ${response.roundMetadata.requiresAnotherRound ? "Let me ask a few more questions." : "Domain recognition complete!"}`,
+        timestamp: new Date(),
+        metadata: {
+          roundNumber: response.roundNumber,
+          confidenceScore: response.roundMetadata.confidenceScoreAfterExpected * 100,
+          domains: response.updatedDomains || [],
+          analysis: response,
+        },
+      };
+      setMessages(prev => [...prev, analysisMessage]);
 
-          toast({
-            title: `Round ${analysisResponse.roundNumber} complete`,
-            description: `Confidence: ${Math.round(analysisResponse.roundMetadata.confidenceScoreAfterExpected * 100)}%. Continuing to next round...`,
-          });
-        } else {
-          // Threshold reached, navigate to generation status
-          setPhase("generating");
-          navigate(`/project/${sessionId}/status`);
+      if (response.roundMetadata.requiresAnotherRound) {
+        // Continue with more questions
+        setCurrentRound(response.roundNumber);
+        setFollowupQuestions(response.questions || []);
+        setFollowupIndex(0);
+        setAnswers({});
+
+        if (response.questions && response.questions.length > 0) {
+          setTimeout(() => {
+            const nextQ = response.questions![0];
+            const nextMessage: ChatMessage = {
+              id: `fq-${nextQ.questionId}-r${response.roundNumber}`,
+              type: "ai",
+              content: nextQ.questionText || "",
+              timestamp: new Date(),
+              metadata: { questionId: nextQ.questionId },
+            };
+            setMessages(prev => [...prev, nextMessage]);
+          }, 1000);
         }
       } else {
-        // 202 Accepted - generation started
-        setPhase("generating");
-        navigate(`/project/${sessionId}/status`);
+        // Threshold reached, show domain approval
+        setShowDomainApproval(true);
       }
     } catch (error) {
       console.error("Failed to submit followup:", error);
@@ -163,19 +314,63 @@ const Questionnaire = () => {
     }
   };
 
-  const handleSubmit = () => {
-    if (phase === "foundation") {
-      handleSubmitFoundation();
-    } else {
-      handleSubmitFollowup();
+  const handleApproveDomain = async () => {
+    setIsSubmitting(true);
+    
+    const approvalMessage: ChatMessage = {
+      id: "approving",
+      type: "system",
+      content: "Starting system generation...",
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, approvalMessage]);
+
+    try {
+      await apiClient.approveDomain(Number(sessionId));
+      
+      toast({
+        title: "Domain approved!",
+        description: "Redirecting to generation status...",
+      });
+
+      navigate(`/project/${sessionId}/status`);
+    } catch (error) {
+      console.error("Failed to approve domain:", error);
+      toast({
+        title: "Approval failed",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
-  const canProceed = getCurrentAnswer().trim().length > 0;
+  const toggleDomainExpand = (domainName: string) => {
+    setExpandedDomains(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(domainName)) {
+        newSet.delete(domainName);
+      } else {
+        newSet.add(domainName);
+      }
+      return newSet;
+    });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const progress = isFoundationPhase
+    ? ((currentQuestionIndex + 1) / foundationQuestions.length) * 100
+    : confidenceScore;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -189,184 +384,316 @@ const Questionnaire = () => {
                   {session?.projectName || "New Project"}
                 </span>
                 <span className="text-sm text-muted-foreground ml-2">
-                  {phase === "foundation" ? "Foundation Questions" : `Round ${roundNumber}`}
+                  {isFoundationPhase ? "Foundation" : `Round ${currentRound}`}
                 </span>
               </div>
             </div>
 
-            {phase === "followup" && (
-              <div className="flex items-center gap-2 bg-card border border-border/50 rounded-full px-4 py-2">
-                <Target className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">
-                  Confidence: <span className="text-gradient">{Math.round(confidenceScore)}%</span>
-                </span>
-                <span className="text-xs text-muted-foreground">/ 85%</span>
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              {!isFoundationPhase && (
+                <div className="flex items-center gap-2 bg-card border border-border/50 rounded-full px-4 py-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">
+                    <span className="text-gradient">{Math.round(confidenceScore)}%</span>
+                  </span>
+                  <span className="text-xs text-muted-foreground">/ 85%</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          <Progress value={progress} className="h-2" />
-          <div className="flex justify-between text-sm text-muted-foreground mt-2">
-            <span>Question {currentQuestionIndex + 1} of {totalQuestions}</span>
-            <span>{Math.round(progress)}% complete</span>
+          <Progress 
+            value={progress} 
+            className="h-2"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground mt-2">
+            <span>
+              {isFoundationPhase 
+                ? `Question ${currentQuestionIndex + 1} of ${foundationQuestions.length}`
+                : `Confidence threshold: 85%`}
+            </span>
+            <span>{Math.round(progress)}%</span>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${phase}-${currentQuestionIndex}`}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-8"
-          >
-            {/* Round Analysis Panel */}
-            {phase === "followup" && roundAnalysis && (
-              <div className="bg-card/50 border border-border/50 rounded-xl p-4 space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <Brain className="w-4 h-4 text-primary" />
-                  <span className="font-medium">AI Analysis</span>
+      {/* Chat Area */}
+      <main className="flex-1 overflow-hidden flex flex-col container mx-auto px-4 max-w-4xl">
+        <div className="flex-1 overflow-y-auto py-6 space-y-4">
+          <AnimatePresence mode="popLayout">
+            {messages.map((message) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className={`flex ${
+                  message.type === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-2xl p-4 ${
+                    message.type === "user"
+                      ? "bg-primary text-primary-foreground ml-12"
+                      : message.type === "system"
+                      ? "bg-secondary/50 text-muted-foreground border border-border/50"
+                      : "bg-card border border-border/50 mr-12"
+                  }`}
+                >
+                  {/* AI/System message header */}
+                  {message.type === "ai" && (
+                    <div className="flex items-center gap-2 mb-2 text-primary">
+                      <Brain className="w-4 h-4" />
+                      <span className="text-xs font-medium">DomForgeAI</span>
+                    </div>
+                  )}
+
+                  {message.type === "system" && (
+                    <div className="flex items-center gap-2 mb-2 text-muted-foreground">
+                      <Sparkles className="w-4 h-4" />
+                      <span className="text-xs font-medium">System</span>
+                    </div>
+                  )}
+
+                  {/* Message content */}
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+
+                  {/* Domain Analysis Panel */}
+                  {message.metadata?.domains && message.metadata.domains.length > 0 && (
+                    <DomainAnalysisPanel
+                      domains={message.metadata.domains}
+                      analysis={message.metadata.analysis}
+                      expandedDomains={expandedDomains}
+                      toggleDomainExpand={toggleDomainExpand}
+                    />
+                  )}
                 </div>
-                
-                {roundAnalysis.updatedDomains && roundAnalysis.updatedDomains.length > 0 && (
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {/* Domain Approval UI */}
+          {showDomainApproval && roundAnalysis && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card border-2 border-primary/50 rounded-2xl p-6 shadow-glow"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Domain Recognition Complete</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Confidence: {Math.round(confidenceScore)}%
+                  </p>
+                </div>
+              </div>
+
+              {/* Domain summary */}
+              {roundAnalysis.updatedDomains && roundAnalysis.updatedDomains.length > 0 && (
+                <div className="mb-4 space-y-2">
+                  <p className="text-sm font-medium">Identified Domains:</p>
                   <div className="flex flex-wrap gap-2">
                     {roundAnalysis.updatedDomains.map((domain, i) => (
-                      <span 
+                      <span
                         key={i}
-                        className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full"
+                        className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium flex items-center gap-2"
                       >
-                        {domain.domainName} ({domain.estimatedEntities} entities)
+                        <Layers className="w-3 h-3" />
+                        {domain.domainName}
+                        <span className="text-xs opacity-70">
+                          ({domain.estimatedEntities} entities)
+                        </span>
                       </span>
                     ))}
                   </div>
-                )}
-
-                {roundAnalysis.nextRoundFocus && roundAnalysis.nextRoundFocus.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Focus areas: {roundAnalysis.nextRoundFocus.join(", ")}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Question Card */}
-            <div className="bg-card border border-border/50 rounded-2xl p-8 space-y-6">
-              {/* Question Header */}
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shrink-0">
-                  <span className="text-lg font-bold text-primary-foreground">
-                    {currentQuestionIndex + 1}
-                  </span>
                 </div>
-                <div className="space-y-2">
-                  <h2 className="text-xl font-semibold leading-tight">
-                    {phase === "foundation"
-                      ? (currentQuestion as FoundationQuestion)?.questionText
-                      : (currentQuestion as Question)?.questionText}
-                  </h2>
-                  
-                  {/* Help text for foundation questions */}
-                  {phase === "foundation" && (currentQuestion as FoundationQuestion)?.helpText && (
-                    <p className="text-sm text-muted-foreground flex items-start gap-2">
-                      <HelpCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                      {(currentQuestion as FoundationQuestion).helpText}
-                    </p>
-                  )}
+              )}
 
-                  {/* Reason for followup questions */}
-                  {phase === "followup" && (currentQuestion as Question)?.reason && (
-                    <p className="text-sm text-muted-foreground flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-primary" />
-                      {(currentQuestion as Question).reason}
-                    </p>
-                  )}
-
-                  {/* Affected domains */}
-                  {phase === "followup" && (currentQuestion as Question)?.affectsDomains && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {(currentQuestion as Question).affectsDomains?.map((domain, i) => (
-                        <span 
-                          key={i}
-                          className="px-2 py-0.5 bg-muted text-muted-foreground text-xs rounded"
-                        >
-                          {domain}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+              {/* Risks warning */}
+              {roundAnalysis.refinedDomainAnalysis?.identifiedRisks && 
+               roundAnalysis.refinedDomainAnalysis.identifiedRisks.length > 0 && (
+                <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-4 h-4 text-destructive" />
+                    <span className="text-sm font-medium text-destructive">
+                      Identified Risks
+                    </span>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {roundAnalysis.refinedDomainAnalysis.identifiedRisks.map((risk, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-destructive">•</span>
+                        <span>{risk.risk}: {risk.description}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-
-              {/* Answer Input */}
-              <div className="space-y-3">
-                <textarea
-                  value={getCurrentAnswer()}
-                  onChange={(e) => handleAnswerChange(e.target.value)}
-                  placeholder={
-                    phase === "foundation"
-                      ? (currentQuestion as FoundationQuestion)?.placeholder || "Type your answer..."
-                      : "Provide your answer..."
-                  }
-                  className="w-full h-32 px-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {phase === "foundation"
-                    ? `Question type: ${(currentQuestion as FoundationQuestion)?.questionTypeName || "Text"}`
-                    : `Expected: ${(currentQuestion as Question)?.expectedAnswerType || "Text response"}`}
-                </p>
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                onClick={handlePrevious}
-                disabled={currentQuestionIndex === 0}
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Previous
-              </Button>
+              )}
 
               <div className="flex gap-3">
-                {!isLastQuestion ? (
-                  <Button
-                    variant="hero"
-                    onClick={handleNext}
-                    disabled={!canProceed}
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
-                ) : (
-                  <Button
-                    variant="hero"
-                    onClick={handleSubmit}
-                    disabled={!canProceed || isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                        {phase === "foundation" ? "Submit & Continue" : "Submit Round"}
-                      </>
-                    )}
-                  </Button>
-                )}
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="flex-1"
+                  onClick={handleApproveDomain}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Starting Generation...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Approve & Generate
+                    </>
+                  )}
+                </Button>
               </div>
+            </motion.div>
+          )}
+
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input Area */}
+        {!showDomainApproval && (
+          <div className="border-t border-border/50 py-4">
+            <div className="flex gap-3">
+              <textarea
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  isSubmitting
+                    ? "Processing..."
+                    : "Type your answer and press Enter..."
+                }
+                disabled={isSubmitting}
+                className="flex-1 min-h-[52px] max-h-32 px-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none"
+                rows={1}
+              />
+              <Button
+                variant="hero"
+                size="icon"
+                className="h-[52px] w-[52px]"
+                onClick={handleSendMessage}
+                disabled={isSubmitting || !inputValue.trim()}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
+              </Button>
             </div>
-          </motion.div>
-        </AnimatePresence>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Press Enter to send • Shift+Enter for new line
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );
 };
+
+// Domain Analysis Panel Component
+function DomainAnalysisPanel({
+  domains,
+  analysis,
+  expandedDomains,
+  toggleDomainExpand,
+}: {
+  domains: UpdatedDomain[];
+  analysis?: RoundAnalysisModel;
+  expandedDomains: Set<string>;
+  toggleDomainExpand: (name: string) => void;
+}) {
+  return (
+    <div className="mt-4 pt-4 border-t border-border/50">
+      <p className="text-xs font-medium text-muted-foreground mb-3">
+        Identified Domains & Microservices
+      </p>
+      <div className="space-y-2">
+        {domains.map((domain, i) => {
+          const isExpanded = expandedDomains.has(domain.domainName || "");
+          return (
+            <div
+              key={i}
+              className="rounded-lg bg-secondary/30 overflow-hidden"
+            >
+              <button
+                onClick={() => toggleDomainExpand(domain.domainName || "")}
+                className="w-full flex items-center justify-between p-3 hover:bg-secondary/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-primary" />
+                  <span className="font-medium text-sm">{domain.domainName}</span>
+                  <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
+                    {domain.estimatedEntities} entities
+                  </span>
+                </div>
+                {isExpanded ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="border-t border-border/50"
+                  >
+                    <div className="p-3 space-y-2">
+                      {domain.changes && (
+                        <p className="text-xs text-muted-foreground">
+                          {domain.changes}
+                        </p>
+                      )}
+                      {domain.newProbableEntities && domain.newProbableEntities.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium mb-1">Probable Entities:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {domain.newProbableEntities.map((entity, j) => (
+                              <span
+                                key={j}
+                                className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded flex items-center gap-1"
+                              >
+                                <Box className="w-3 h-3" />
+                                {entity}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Next Round Focus */}
+      {analysis?.nextRoundFocus && analysis.nextRoundFocus.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border/50">
+          <p className="text-xs text-muted-foreground">
+            Next focus: {analysis.nextRoundFocus.join(", ")}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default Questionnaire;

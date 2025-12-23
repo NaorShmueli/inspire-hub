@@ -140,6 +140,14 @@ export interface PlanEntity {
   highlights: PlanHighlight[] | null;
 }
 
+export interface UserCreditsEntity {
+  userId: number;
+  creditsBalance: number;
+  lastReset: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface JwtRequest {
   userId?: number | null;
 }
@@ -181,4 +189,19 @@ export interface User {
   email: string;
   name: string;
   avatarUrl?: string;
+}
+
+// Chat message type for chat-like questionnaire
+export interface ChatMessage {
+  id: string;
+  type: 'system' | 'ai' | 'user';
+  content: string;
+  timestamp: Date;
+  metadata?: {
+    questionId?: number;
+    roundNumber?: number;
+    confidenceScore?: number;
+    domains?: UpdatedDomain[];
+    analysis?: RoundAnalysisModel;
+  };
 }
