@@ -477,11 +477,11 @@ const Questionnaire = () => {
     };
     setMessages((prev) => [...prev, userMessage]);
 
-    // Store answer - use question_id for both types
-    const questionKey = isFoundationPhase
-      ? `Q${(currentQuestion as FoundationQuestion).question_id}`
-      : `FQ${(currentQuestion as Question).question_id}`;
-    const updatedAnswers = { ...answers, [questionKey]: userAnswer };
+    // Store answer - use full question text as key
+    const questionText = isFoundationPhase
+      ? (currentQuestion as FoundationQuestion).question || ""
+      : (currentQuestion as Question).question || "";
+    const updatedAnswers = { ...answers, [questionText]: userAnswer };
     setAnswers(updatedAnswers);
 
     if (isFoundationPhase) {
