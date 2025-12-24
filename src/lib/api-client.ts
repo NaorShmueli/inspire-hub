@@ -13,6 +13,7 @@ import type {
   SessionMetadata,
   CreditPackEntity,
   CreditPackRequest,
+  UserSubscriptionEntity,
 } from "./api-types";
 
 const API_BASE_URL = "http://localhost:5145/api";
@@ -200,6 +201,10 @@ class ApiClient {
   // Plans endpoints
   async getPlans(): Promise<StrategyResult<PlanEntity[]>> {
     return this.request<StrategyResult<PlanEntity[]>>("/Plans/details");
+  }
+
+  async getUserPlan(userId: number): Promise<UserSubscriptionEntity> {
+    return this.request<UserSubscriptionEntity>(`/Plans/user/plan/${userId}`);
   }
 
   async getCreditPacks(): Promise<StrategyResult<CreditPackEntity[]>> {

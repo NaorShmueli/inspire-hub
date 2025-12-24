@@ -289,6 +289,17 @@ export interface CancelSubscriptionRequest {
   userId: number;
 }
 
+export interface UserSubscriptionEntity {
+  userId: number;
+  planId: number;
+  startDate: string;
+  endDate: string | null;
+  autoRenew: boolean;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface StrategyResult<T> {
   data: T;
   errors: Record<string, string> | null;
