@@ -16,12 +16,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
-import type { PlanEntity, CreditPackEntity, UserCreditsEntity } from "@/lib/api-types";
+import type { PlanEntity, CreditPackEntity, UserCreditsEntity, UserSubscriptionEntity } from "@/lib/api-types";
 
 const MyPlan = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [currentPlan, setCurrentPlan] = useState<PlanEntity | null>(null);
+  const [userSubscription, setUserSubscription] = useState<UserSubscriptionEntity | null>(null);
   const [creditPacks, setCreditPacks] = useState<CreditPackEntity[]>([]);
   const [credits, setCredits] = useState<UserCreditsEntity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,17 +31,32 @@ const MyPlan = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!user) return;
+      
       setIsLoading(true);
       try {
-        const [planResult, packsResult, creditsResult] = await Promise.all([
+        const [planResult, packsResult, creditsResult, subscriptionResult] = await Promise.all([
           apiClient.getPlans(),
           apiClient.getCreditPacks(),
           apiClient.getCreditBalance(),
+          apiClient.getUserPlan(user.id).catch(() => null),
         ]);
 
         if (!planResult.hasErrors && planResult.data) {
-          // Assume first plan is current (in production, API would return user's actual plan)
-          setCurrentPlan(Array.isArray(planResult.data) ? planResult.data[0] : planResult.data);
+          const plans = Array.isArray(planResult.data) ? planResult.data : [planResult.data];
+          
+          // If user has a subscription, find the matching plan
+          if (subscriptionResult) {
+            setUserSubscription(subscriptionResult);
+            const userPlan = plans.find(p => p.id === subscriptionResult.planId);
+            if (userPlan) {
+              setCurrentPlan(userPlan);
+            }
+          } else {
+            // Default to Free plan (first plan or plan with priceMonthly = 0)
+            const freePlan = plans.find(p => p.priceMonthly === 0) || plans[0];
+            setCurrentPlan(freePlan || null);
+          }
         }
 
         if (!packsResult.hasErrors && packsResult.data) {
@@ -61,7 +77,7 @@ const MyPlan = () => {
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   const handleBuyPack = async (pack: CreditPackEntity) => {
     if (!user) return;
@@ -189,6 +205,32 @@ const MyPlan = () => {
                   </div>
                 </div>
 
+                {/* Subscription Details */}
+                {userSubscription && (
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Status</span>
+                      <span className={`font-medium ${userSubscription.status === 'active' ? 'text-green-500' : 'text-yellow-500'}`}>
+                        {userSubscription.status}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Start Date</span>
+                      <span>{new Date(userSubscription.startDate).toLocaleDateString()}</span>
+                    </div>
+                    {userSubscription.endDate && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">End Date</span>
+                        <span>{new Date(userSubscription.endDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Auto Renew</span>
+                      <span>{userSubscription.autoRenew ? 'Yes' : 'No'}</span>
+                    </div>
+                  </div>
+                )}
+
                 {currentPlan.highlights && currentPlan.highlights.length > 0 && (
                   <ul className="space-y-2">
                     {currentPlan.highlights.map((highlight, i) => (
@@ -204,7 +246,7 @@ const MyPlan = () => {
                   <Button variant="outline" onClick={() => navigate("/pricing")}>
                     Upgrade Plan
                   </Button>
-                  {!currentPlan.isContactSales && currentPlan.priceMonthly > 0 && (
+                  {userSubscription && userSubscription.status === 'active' && !currentPlan.isContactSales && (
                     <Button
                       variant="ghost"
                       className="text-destructive hover:text-destructive"
