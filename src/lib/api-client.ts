@@ -93,12 +93,17 @@ class ApiClient {
       return {} as T;
     }
 
-    // Handle 204 No Content
+    // Handle 204 No Content or empty responses
     if (response.status === 204) {
       return {} as T;
     }
 
-    return response.json();
+    // Handle empty body (e.g., DELETE success with 200)
+    const text = await response.text();
+    if (!text) {
+      return {} as T;
+    }
+    return JSON.parse(text) as T;
   }
 
   private async refreshAccessToken(): Promise<boolean> {
