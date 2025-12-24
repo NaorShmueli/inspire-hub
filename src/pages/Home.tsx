@@ -53,8 +53,9 @@ const Home = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
             >
-              DomForgeAI transforms weeks of development into minutes. Generate complete, 
-              enterprise-grade microservices with zero compilation errors.
+              DomForgeAI transforms weeks of development into minutes. Generate complete 
+              microservices architecture packages including C4 diagrams, .NET Core 8 solutions, 
+              DBML schemas, and OpenAPI specifications.
             </motion.p>
 
             <motion.div

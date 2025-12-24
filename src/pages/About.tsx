@@ -8,36 +8,36 @@ const values = [
   {
     icon: Target,
     title: "Mission",
-    description: "To make enterprise-grade software development accessible to everyone, empowering businesses of all sizes to build modern, scalable systems without requiring massive teams or budgets.",
+    description: "To accelerate microservices adoption by providing AI-powered domain analysis and architecture generation, helping teams move from concept to implementation faster.",
   },
   {
     icon: Lightbulb,
     title: "Vision",
-    description: "We envision a world where skilled engineers focus on creative problem-solving and complex business challenges, not repetitive boilerplate code.",
+    description: "We envision a world where any organization can adopt microservices architecture best practices without extensive consulting costs or lengthy analysis phases.",
   },
   {
     icon: Users,
     title: "Who We Serve",
-    description: "Startups validating MVPs, enterprises modernizing legacy systems, consultancies scaling their delivery, and product teams building faster.",
+    description: "Companies, startups, individuals, and development teams who want to transform their systems into modern microservices architecture with professional-grade deliverables.",
   },
 ];
 
 const useCases = [
   {
-    title: "Enterprise Digital Transformation",
-    description: "Large organizations replacing legacy systems with dozens of modern microservices in weeks instead of years.",
+    title: "System Modernization",
+    description: "Organizations breaking down monolithic applications into well-defined microservices with clear boundaries.",
   },
   {
-    title: "Startup MVP Development",
-    description: "Startups building production-grade infrastructure before hiring a full engineering team.",
+    title: "Greenfield Projects",
+    description: "Startups and teams starting new projects with a solid microservices foundation from day one.",
   },
   {
-    title: "Consulting & Agency Work",
-    description: "Consultancies delivering 5-10x more projects with the same team size.",
+    title: "Architecture Documentation",
+    description: "Teams needing comprehensive C4 diagrams, database schemas, and API specifications for their systems.",
   },
   {
-    title: "Internal Tools Development",
-    description: "Enterprises rapidly building internal tools without diverting engineering resources.",
+    title: "Rapid Prototyping",
+    description: "Quickly validating microservices architecture ideas with real, runnable .NET Core 8 code.",
   },
 ];
 
@@ -84,22 +84,24 @@ const About = () => {
               </h2>
               <div className="space-y-4 text-muted-foreground text-lg">
                 <p>
-                  DomForgeAI was created from a fundamental belief: expensive, skilled engineers 
-                  should spend their time on creative problem-solving, not repetitive typing.
+                  DomForgeAI is a SaaS platform that provides comprehensive domain analysis 
+                  for companies, individuals, and startups looking to implement microservices 
+                  architecture the right way.
                 </p>
                 <p>
-                  The software development industry has long accepted that creating boilerplate code 
-                  is simply "part of the job," but this acceptance comes at an enormous cost in 
-                  both time and resources.
+                  Through an intelligent AI-guided questionnaire, we analyze your business 
+                  requirements and identify domain boundaries with confidence scoring. The 
+                  iterative process ensures we truly understand your system before generating 
+                  any architecture.
                 </p>
                 <p>
-                  We identified a significant gap in the market: enterprises faced a choice between 
-                  expensive traditional consulting ($15,000-$50,000 per microservice, 4-6 weeks) 
-                  and AI-generated specifications that still required extensive manual coding.
+                  The output is a complete package: C4 architecture diagrams, .NET Core 8 
+                  Visual Studio solutions with boilerplate implementations, DBML database 
+                  schemas, and OpenAPI YAML specifications for each microservice.
                 </p>
                 <p className="text-foreground font-medium">
-                  DomForgeAI fills this gap by providing traditional consulting quality with 
-                  AI-powered speed at an affordable price.
+                  Everything is delivered as a downloadable ZIP file, ready to extend 
+                  and deploy.
                 </p>
               </div>
             </motion.div>

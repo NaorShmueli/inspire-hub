@@ -16,37 +16,37 @@ const steps = [
   {
     number: "01",
     icon: ClipboardList,
-    title: "Specification Collection",
-    description: "Provide your business requirements through an AI-guided questionnaire or upload existing specifications like DBML schemas or OpenAPI specs.",
-    details: ["Natural language input", "DBML schema upload", "OpenAPI spec import"],
+    title: "Start Your Project",
+    description: "Log in with Google and create a new project. Provide your project name and a brief description of the system you want to build.",
+    details: ["Google Sign-In", "Project Creation", "10 Free Credits"],
   },
   {
     number: "02",
     icon: Brain,
-    title: "AI Analysis",
-    description: "Our AI analyzes your requirements to understand domain boundaries, entities, relationships, and business operations.",
-    details: ["Entity identification", "Relationship mapping", "Operation detection"],
+    title: "Answer Core Questions",
+    description: "Our AI-guided questionnaire asks targeted questions about your business requirements. Answer foundation questions to help us understand your domain.",
+    details: ["Foundation Questions", "Business Context", "Requirements Gathering"],
   },
   {
     number: "03",
     icon: Layers,
-    title: "Architecture Generation",
-    description: "DomForgeAI generates complete architecture including database schemas, API specifications, C4 models, and infrastructure configs.",
-    details: ["DBML schemas", "OpenAPI specs", "C4 models", "Terraform configs"],
+    title: "Iterative Domain Analysis",
+    description: "The AI analyzes your answers and asks follow-up questions to refine understanding. Watch the confidence score increase as we identify your domain boundaries.",
+    details: ["Follow-up Questions", "Confidence Scoring", "Domain Detection"],
   },
   {
     number: "04",
     icon: Code2,
-    title: "Code Generation",
-    description: "The platform produces complete source code for all layers: API controllers, entity models, repositories, business logic, and validators.",
-    details: ["5-layer architecture", "50-65 files", "Zero errors"],
+    title: "Architecture Generation",
+    description: "Once confidence is high enough, approve the domain analysis. DomForgeAI generates complete architecture including C4 diagrams, DBML schemas, and OpenAPI specs.",
+    details: ["C4 Architecture", "DBML Schemas", "OpenAPI YAML"],
   },
   {
     number: "05",
     icon: Package,
-    title: "Package & Deliver",
-    description: "Everything is packaged into a downloadable ZIP containing a complete Visual Studio solution ready to build and deploy.",
-    details: ["Visual Studio solution", "Docker support", "Documentation"],
+    title: "Download Your Package",
+    description: "Download a ZIP file containing everything: system architecture, microservice solutions (.NET Core 8), database schemas, and API specifications.",
+    details: [".NET Core 8 Solutions", "Complete Package", "Ready to Extend"],
   },
 ];
 
@@ -167,12 +167,12 @@ const HowItWorks = () => {
               </thead>
               <tbody>
                 {[
-                  { task: "Architecture Design", trad: "3-5 days", ai: "30 seconds", save: "99.9%" },
-                  { task: "Project Setup", trad: "1-2 days", ai: "30 seconds", save: "99.9%" },
-                  { task: "Entity Models", trad: "2-3 days", ai: "30 seconds", save: "100%" },
-                  { task: "DTOs Creation", trad: "2-3 days", ai: "30 seconds", save: "100%" },
-                  { task: "Repositories", trad: "3-4 days", ai: "30 seconds", save: "100%" },
-                  { task: "Controllers", trad: "5-7 days", ai: "2-3 hours", save: "95%" },
+                  { task: "Domain Analysis", trad: "3-5 days", ai: "Minutes", save: "99%" },
+                  { task: "Architecture Design (C4)", trad: "2-3 days", ai: "Auto-generated", save: "100%" },
+                  { task: "Database Schema (DBML)", trad: "2-3 days", ai: "Auto-generated", save: "100%" },
+                  { task: "API Specification", trad: "2-3 days", ai: "Auto-generated", save: "100%" },
+                  { task: "Microservice Boilerplate", trad: "5-7 days", ai: "Auto-generated", save: "100%" },
+                  { task: "Total Project Setup", trad: "16-24 days", ai: "2-3 hours", save: "99%" },
                 ].map((row) => (
                   <tr key={row.task} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                     <td className="py-4 px-4">{row.task}</td>
