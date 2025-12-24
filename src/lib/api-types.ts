@@ -104,12 +104,97 @@ export interface UpdatedDomain {
   new_probable_entities: string[] | null;
 }
 
+// Domain Analysis Result types
+export interface AnalysisSummary {
+  total_domains_identified: number;
+  confidence_score: number;
+  requires_followup: boolean;
+  reasoning: string | null;
+}
+
+export interface IdentifiedDomain {
+  domain_name: string | null;
+  description: string | null;
+  business_capability: string | null;
+  estimated_entities: number;
+  probable_entities: string[] | null;
+  key_responsibilities: string[] | null;
+  user_types_served: string[] | null;
+  confidence: number;
+}
+
+export interface DomainRelationship {
+  from_domain: string | null;
+  to_domain: string | null;
+  relationship_type: string | null;
+  interaction_pattern: string | null;
+  description: string | null;
+  data_shared: string[] | null;
+  notes: string | null;
+}
+
+export interface CrossCuttingConcern {
+  concern: string | null;
+  affected_domains: string[] | null;
+  recommendation: string | null;
+  notes: string | null;
+}
+
+export interface IntegrationPoint {
+  external_system: string | null;
+  integrating_domain: string | null;
+  integration_type: string | null;
+  purpose: string | null;
+  criticality: string | null;
+}
+
+export interface ComplianceImpact {
+  regulation: string | null;
+  affected_domains: string[] | null;
+  requirements: string[] | null;
+  architectural_impact: string | null;
+}
+
+export interface ScaleConsiderations {
+  expected_load: string | null;
+  high_traffic_domains: string[] | null;
+  recommendations: string[] | null;
+}
+
+export interface PotentialIssue {
+  issue: string | null;
+  description: string | null;
+  recommendation: string | null;
+  severity: string | null;
+}
+
+export interface RecommendedMicroservicesCount {
+  minimum: number;
+  optimal: number;
+  maximum: number;
+  rationale: string | null;
+  optimal_service_names: string[] | null;
+}
+
+export interface DomainAnalysisResult {
+  analysis_summary: AnalysisSummary | null;
+  identified_domains: IdentifiedDomain[] | null;
+  domain_relationships: DomainRelationship[] | null;
+  cross_cutting_concerns: CrossCuttingConcern[] | null;
+  integration_points: IntegrationPoint[] | null;
+  compliance_impacts: ComplianceImpact[] | null;
+  scale_considerations: ScaleConsiderations | null;
+  potential_issues: PotentialIssue[] | null;
+  recommended_microservices_count: RecommendedMicroservicesCount | null;
+}
+
 export interface RoundAnalysisModel {
   round_metadata: RoundMetadata;
   questions: Question[] | null;
   refined_domain_analysis: RefinedDomainAnalysis;
   updated_domains: UpdatedDomain[] | null;
   next_round_focus: string[] | null;
+  last_analysis_data: DomainAnalysisResult | null;
   roundId: number;
   roundNumber: number;
 }
@@ -238,5 +323,6 @@ export interface ChatMessage {
     confidenceScore?: number;
     domains?: UpdatedDomain[];
     analysis?: RoundAnalysisModel;
+    domainAnalysis?: DomainAnalysisResult;
   };
 }
