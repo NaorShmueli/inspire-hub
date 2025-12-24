@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
-import type { ConversationSession } from "@/lib/api-types";
+import type { ConversationSession, SessionMetadata, ConversationRounds } from "@/lib/api-types";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -124,30 +124,68 @@ const Dashboard = () => {
     e.stopPropagation();
     try {
       const metadata = await apiClient.getSessionMetadata(sessionId);
-      
-      // Find the last round that needs answers
       const rounds = metadata.rounds || [];
-      let resumeRound = rounds.find(r => r.aiAnalysisJson === null);
       
-      if (resumeRound) {
-        // Parse questionsAnswersJson to get the questions
-        const questionsAnswers = resumeRound.questionsAnswersJson 
-          ? JSON.parse(resumeRound.questionsAnswersJson) 
+      // Sort rounds by roundNumber to find the latest
+      const sortedRounds = [...rounds].sort((a, b) => a.roundNumber - b.roundNumber);
+      
+      // Find the round where aiAnalysisJson is null (incomplete round)
+      const incompleteRound = sortedRounds.find(r => r.aiAnalysisJson === null);
+      
+      if (incompleteRound) {
+        // Parse questionsAnswersJson - it contains questions as keys
+        const questionsAnswers = incompleteRound.questionsAnswersJson 
+          ? JSON.parse(incompleteRound.questionsAnswersJson) 
           : {};
         
+        // Check if answers are empty (values are empty strings or null)
+        const hasEmptyAnswers = Object.values(questionsAnswers).every(
+          (val) => val === "" || val === null
+        );
+        
+        // Build resume state with all history data
         navigate(`/project/${sessionId}/questionnaire`, {
           state: {
             session: metadata.session,
-            questions: Object.keys(questionsAnswers).map((key, i) => ({
-              questionId: i + 1,
-              questionText: key,
-            })),
-            resumeRound: resumeRound.roundNumber,
+            resumeData: {
+              rounds: sortedRounds,
+              currentRound: incompleteRound,
+              questionsAnswers,
+              hasEmptyAnswers,
+              roundNumber: incompleteRound.roundNumber,
+            },
           },
         });
+      } else if (sortedRounds.length > 0) {
+        // All rounds complete, check last round for analysis
+        const lastRound = sortedRounds[sortedRounds.length - 1];
+        const analysis = lastRound.aiAnalysisJson 
+          ? JSON.parse(lastRound.aiAnalysisJson) 
+          : null;
+        
+        // If we have analysis, might need domain approval
+        if (analysis && !analysis.round_metadata?.requires_another_round) {
+          navigate(`/project/${sessionId}/questionnaire`, {
+            state: {
+              session: metadata.session,
+              resumeData: {
+                rounds: sortedRounds,
+                showDomainApproval: true,
+                lastAnalysis: analysis,
+              },
+            },
+          });
+        } else {
+          // Go to status page
+          navigate(`/project/${sessionId}/status`);
+        }
       } else {
-        // No incomplete round, go to status
-        navigate(`/project/${sessionId}/status`);
+        // No rounds - start fresh with foundation questions
+        toast({
+          title: "Session needs to be restarted",
+          description: "Please create a new project",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Failed to continue session:", error);
