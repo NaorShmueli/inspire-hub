@@ -32,8 +32,12 @@ const Dashboard = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [activeTab, setActiveTab] = useState("completed");
-  const [completedSessions, setCompletedSessions] = useState<ConversationSession[]>([]);
-  const [inAnalyzeSessions, setInAnalyzeSessions] = useState<ConversationSession[]>([]);
+  const [completedSessions, setCompletedSessions] = useState<
+    ConversationSession[]
+  >([]);
+  const [inAnalyzeSessions, setInAnalyzeSessions] = useState<
+    ConversationSession[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch sessions on mount and tab change
@@ -80,7 +84,10 @@ const Dashboard = () => {
         projectDescription: projectDescription.trim() || null,
       });
 
-      cacheFoundationQuestions(response.session.sessionId, response.foundationQuestions);
+      cacheFoundationQuestions(
+        response.session.sessionId,
+        response.foundationQuestions
+      );
 
       navigate(`/project/${response.session.sessionId}/questionnaire`, {
         state: {
@@ -92,7 +99,8 @@ const Dashboard = () => {
       console.error("Failed to create project:", error);
       toast({
         title: "Failed to create project",
-        description: error instanceof Error ? error.message : "Please try again",
+        description:
+          error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -135,7 +143,8 @@ const Dashboard = () => {
       // Normalize round fields (backend may return different casing)
       const normalizedRounds = rawRounds
         .map((r: any) => {
-          const roundNumber = r.roundNumber ?? r.round_number ?? r.RoundNumber ?? 0;
+          const roundNumber =
+            r.roundNumber ?? r.round_number ?? r.RoundNumber ?? 0;
           const aiAnalysisJson =
             r.aiAnalysisJson ?? r.ai_analysis_json ?? r.AiAnalysisJson ?? null;
           const questionsAnswersJson =
@@ -202,7 +211,8 @@ const Dashboard = () => {
 
         // Fallback: start a new session (backend doesn't support restarting by sessionId)
         const session = metadata.session;
-        const safeProjectName = (session.projectName ?? "").trim() || `Project ${sessionId}`;
+        const safeProjectName =
+          (session.projectName ?? "").trim() || `Project ${sessionId}`;
 
         const response = await apiClient.startSession({
           userId: user?.id || 1,
@@ -210,7 +220,10 @@ const Dashboard = () => {
           projectDescription: session.projectDescription || null,
         });
 
-        cacheFoundationQuestions(response.session.sessionId, response.foundationQuestions);
+        cacheFoundationQuestions(
+          response.session.sessionId,
+          response.foundationQuestions
+        );
 
         toast({
           title: "Started a new draft",
@@ -255,7 +268,10 @@ const Dashboard = () => {
     }
   };
 
-  const renderSessionCard = (session: ConversationSession, isCompleted: boolean) => (
+  const renderSessionCard = (
+    session: ConversationSession,
+    isCompleted: boolean
+  ) => (
     <motion.div
       key={session.sessionId}
       initial={{ opacity: 0 }}
@@ -360,7 +376,9 @@ const Dashboard = () => {
             <div>
               <h1 className="text-3xl font-bold mb-2">
                 Welcome back,{" "}
-                <span className="text-gradient">{user?.name || "Developer"}</span>
+                <span className="text-gradient">
+                  {user?.name || "Developer"}
+                </span>
               </h1>
               <p className="text-muted-foreground">
                 Create new architecture packages or continue existing projects
@@ -447,13 +465,23 @@ const Dashboard = () => {
           )}
 
           {/* Projects Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-4"
+          >
             <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="completed" className="flex items-center gap-2">
+              <TabsTrigger
+                value="completed"
+                className="flex items-center gap-2"
+              >
                 <CheckCircle2 className="w-4 h-4" />
                 Completed ({completedSessions.length})
               </TabsTrigger>
-              <TabsTrigger value="in-analyze" className="flex items-center gap-2">
+              <TabsTrigger
+                value="in-analyze"
+                className="flex items-center gap-2"
+              >
                 <Clock className="w-4 h-4" />
                 In Analyze ({inAnalyzeSessions.length})
               </TabsTrigger>
