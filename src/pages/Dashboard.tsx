@@ -13,6 +13,7 @@ import {
   Download,
   PlayCircle,
   CreditCard,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,6 +34,7 @@ const Dashboard = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [activeTab, setActiveTab] = useState("completed");
+  const [searchFilter, setSearchFilter] = useState("");
   const [completedSessions, setCompletedSessions] = useState<
     ConversationSession[]
   >([]);
@@ -476,7 +478,10 @@ const Dashboard = () => {
           {/* Projects Tabs */}
           <Tabs
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={(value) => {
+              setActiveTab(value);
+              setSearchFilter("");
+            }}
             className="space-y-4"
           >
             <TabsList className="grid w-full max-w-md grid-cols-2">
@@ -496,20 +501,45 @@ const Dashboard = () => {
               </TabsTrigger>
             </TabsList>
 
+            {/* Search Filter */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                placeholder="Search by project name..."
+                className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors text-sm"
+              />
+            </div>
+
             <TabsContent value="completed" className="space-y-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-              ) : completedSessions.length === 0 ? (
-                renderEmptyState("No completed projects yet")
-              ) : (
-                <div className="grid gap-4">
-                  {completedSessions.map((session) =>
-                    renderSessionCard(session, true)
-                  )}
-                </div>
-              )}
+              ) : (() => {
+                const filtered = completedSessions.filter((session) =>
+                  session.projectName?.toLowerCase().includes(searchFilter.toLowerCase())
+                );
+                return filtered.length === 0 ? (
+                  searchFilter ? (
+                    <div className="bg-card/50 border border-border/50 rounded-2xl p-12 text-center">
+                      <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                      <h3 className="text-lg font-medium mb-2">No results found</h3>
+                      <p className="text-muted-foreground">No projects match "{searchFilter}"</p>
+                    </div>
+                  ) : (
+                    renderEmptyState("No completed projects yet")
+                  )
+                ) : (
+                  <div className="grid gap-4">
+                    {filtered.map((session) =>
+                      renderSessionCard(session, true)
+                    )}
+                  </div>
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="in-analyze" className="space-y-4">
@@ -517,15 +547,28 @@ const Dashboard = () => {
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-              ) : inAnalyzeSessions.length === 0 ? (
-                renderEmptyState("No projects in analysis")
-              ) : (
-                <div className="grid gap-4">
-                  {inAnalyzeSessions.map((session) =>
-                    renderSessionCard(session, false)
-                  )}
-                </div>
-              )}
+              ) : (() => {
+                const filtered = inAnalyzeSessions.filter((session) =>
+                  session.projectName?.toLowerCase().includes(searchFilter.toLowerCase())
+                );
+                return filtered.length === 0 ? (
+                  searchFilter ? (
+                    <div className="bg-card/50 border border-border/50 rounded-2xl p-12 text-center">
+                      <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                      <h3 className="text-lg font-medium mb-2">No results found</h3>
+                      <p className="text-muted-foreground">No projects match "{searchFilter}"</p>
+                    </div>
+                  ) : (
+                    renderEmptyState("No projects in analysis")
+                  )
+                ) : (
+                  <div className="grid gap-4">
+                    {filtered.map((session) =>
+                      renderSessionCard(session, false)
+                    )}
+                  </div>
+                );
+              })()}
             </TabsContent>
           </Tabs>
         </motion.div>
