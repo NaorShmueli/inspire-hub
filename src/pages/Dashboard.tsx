@@ -177,32 +177,41 @@ const Dashboard = () => {
         return;
       }
 
-      // If nothing is incomplete, still resume questionnaire with history (instead of status)
-      if (normalizedRounds.length > 0) {
-        const lastRound = normalizedRounds[normalizedRounds.length - 1];
-        const analysis = lastRound.aiAnalysisJson
-          ? (JSON.parse(lastRound.aiAnalysisJson) as any)
-          : null;
-
+      // No rounds yet - restart session with existing sessionId to get foundation questions
+      if (normalizedRounds.length === 0) {
+        const session = metadata.session;
+        const response = await apiClient.startSession({
+          userId: user?.id || 1,
+          projectName: session.projectName || "",
+          projectDescription: session.projectDescription || null,
+          sessionId: sessionId,
+        });
         navigate(`/project/${sessionId}/questionnaire`, {
           state: {
-            session: metadata.session,
-            resumeData: {
-              rounds: normalizedRounds,
-              showDomainApproval: Boolean(
-                analysis && !analysis.round_metadata?.requires_another_round
-              ),
-              lastAnalysis: analysis,
-            },
+            session: response.session,
+            questions: response.foundationQuestions,
           },
         });
         return;
       }
 
-      toast({
-        title: "Nothing to resume",
-        description: "This session has no rounds yet.",
-        variant: "destructive",
+      // If nothing is incomplete, still resume questionnaire with history (instead of status)
+      const lastRound = normalizedRounds[normalizedRounds.length - 1];
+      const analysis = lastRound.aiAnalysisJson
+        ? (JSON.parse(lastRound.aiAnalysisJson) as any)
+        : null;
+
+      navigate(`/project/${sessionId}/questionnaire`, {
+        state: {
+          session: metadata.session,
+          resumeData: {
+            rounds: normalizedRounds,
+            showDomainApproval: Boolean(
+              analysis && !analysis.round_metadata?.requires_another_round
+            ),
+            lastAnalysis: analysis,
+          },
+        },
       });
     } catch (error) {
       console.error("Failed to continue session:", error);
