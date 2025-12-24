@@ -26,7 +26,18 @@ import type {
   ConversationSession,
   ChatMessage,
   UpdatedDomain,
+  ConversationRounds,
 } from "@/lib/api-types";
+
+interface ResumeData {
+  rounds: ConversationRounds[];
+  currentRound?: ConversationRounds;
+  questionsAnswers?: Record<string, string>;
+  hasEmptyAnswers?: boolean;
+  roundNumber?: number;
+  showDomainApproval?: boolean;
+  lastAnalysis?: RoundAnalysisModel;
+}
 
 const Questionnaire = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -60,10 +71,165 @@ const Questionnaire = () => {
   const [expandedDomains, setExpandedDomains] = useState<Set<string>>(
     new Set()
   );
+  const [isResuming, setIsResuming] = useState(false);
 
-  // Initialize chat with first question
+  // Handle resume from Dashboard
   useEffect(() => {
-    if (foundationQuestions.length > 0 && messages.length === 0) {
+    const resumeData = location.state?.resumeData as ResumeData | undefined;
+    if (resumeData && !isResuming) {
+      setIsResuming(true);
+      initializeFromResumeData(resumeData);
+    }
+  }, [location.state?.resumeData]);
+
+  const initializeFromResumeData = (resumeData: ResumeData) => {
+    const chatMessages: ChatMessage[] = [];
+    
+    // Add welcome message
+    chatMessages.push({
+      id: "welcome",
+      type: "system",
+      content: `Welcome back! Let's continue designing your system architecture for "${
+        session?.projectName || "your project"
+      }".`,
+      timestamp: new Date(),
+    });
+
+    // Build history from completed rounds
+    resumeData.rounds.forEach((round) => {
+      if (round.aiAnalysisJson) {
+        // This round has analysis - show summary
+        const analysis = JSON.parse(round.aiAnalysisJson) as RoundAnalysisModel;
+        
+        chatMessages.push({
+          id: `round-${round.roundNumber}-summary`,
+          type: "ai",
+          content: `Round ${round.roundNumber} completed. Confidence: ${Math.round(
+            (analysis.round_metadata?.confidence_score_after_expected || 0) * 100
+          )}%`,
+          timestamp: new Date(round.analyzedAt || round.createdAt),
+          metadata: {
+            roundNumber: round.roundNumber,
+            confidenceScore: (analysis.round_metadata?.confidence_score_after_expected || 0) * 100,
+            domains: analysis.updated_domains || [],
+            analysis,
+          },
+        });
+
+        // Update confidence from last analyzed round
+        if (analysis.round_metadata) {
+          setConfidenceScore(analysis.round_metadata.confidence_score_after_expected * 100);
+        }
+        setRoundAnalysis(analysis);
+      }
+    });
+
+    // Check if we should show domain approval
+    if (resumeData.showDomainApproval && resumeData.lastAnalysis) {
+      setRoundAnalysis(resumeData.lastAnalysis);
+      setConfidenceScore(
+        (resumeData.lastAnalysis.round_metadata?.confidence_score_after_expected || 0) * 100
+      );
+      setShowDomainApproval(true);
+      setIsFoundationPhase(false);
+      setMessages(chatMessages);
+      return;
+    }
+
+    // Handle incomplete round
+    if (resumeData.currentRound && resumeData.questionsAnswers) {
+      const roundNumber = resumeData.currentRound.roundNumber;
+      setCurrentRound(roundNumber);
+      setIsFoundationPhase(false);
+
+      // Build questions from questionsAnswers keys
+      const questionKeys = Object.keys(resumeData.questionsAnswers);
+      const questions: Question[] = questionKeys.map((key, i) => ({
+        question_id: i + 1,
+        question: key,
+        reason: null,
+        affects_domains: null,
+        priority: null,
+        expected_answer_type: null,
+        follow_up_if_answer: null,
+      }));
+
+      setFollowupQuestions(questions);
+
+      // If answers are empty, start from first question
+      if (resumeData.hasEmptyAnswers) {
+        chatMessages.push({
+          id: "resume-message",
+          type: "system",
+          content: `Resuming Round ${roundNumber}. Let's continue with the questions.`,
+          timestamp: new Date(),
+        });
+
+        if (questions.length > 0) {
+          chatMessages.push({
+            id: `fq-${questions[0].question_id}`,
+            type: "ai",
+            content: questions[0].question || "",
+            timestamp: new Date(),
+            metadata: { questionId: questions[0].question_id },
+          });
+        }
+        setFollowupIndex(0);
+      } else {
+        // Find first unanswered question
+        const answeredCount = Object.values(resumeData.questionsAnswers).filter(
+          (v) => v && v !== ""
+        ).length;
+        
+        // Show history of answered questions
+        questionKeys.forEach((key, i) => {
+          const answer = resumeData.questionsAnswers![key];
+          if (answer && answer !== "") {
+            chatMessages.push({
+              id: `fq-${i}-q`,
+              type: "ai",
+              content: key,
+              timestamp: new Date(),
+            });
+            chatMessages.push({
+              id: `fq-${i}-a`,
+              type: "user",
+              content: answer,
+              timestamp: new Date(),
+            });
+          }
+        });
+
+        // Set answers state
+        const existingAnswers: Record<string, string> = {};
+        questionKeys.forEach((key, i) => {
+          const answer = resumeData.questionsAnswers![key];
+          if (answer && answer !== "") {
+            existingAnswers[`FQ${i + 1}`] = answer;
+          }
+        });
+        setAnswers(existingAnswers);
+
+        // Continue from next unanswered question
+        if (answeredCount < questions.length) {
+          chatMessages.push({
+            id: `fq-${answeredCount}-continue`,
+            type: "ai",
+            content: questions[answeredCount].question || "",
+            timestamp: new Date(),
+            metadata: { questionId: questions[answeredCount].question_id },
+          });
+          setFollowupIndex(answeredCount);
+        }
+      }
+    }
+
+    setMessages(chatMessages);
+  };
+
+  // Initialize chat with first question (only for new sessions)
+  useEffect(() => {
+    if (foundationQuestions.length > 0 && messages.length === 0 && !location.state?.resumeData) {
       const welcomeMessage: ChatMessage = {
         id: "welcome",
         type: "system",
@@ -86,7 +252,7 @@ const Questionnaire = () => {
 
       setMessages([welcomeMessage, questionMessage]);
     }
-  }, [foundationQuestions, messages.length, session?.projectName]);
+  }, [foundationQuestions, messages.length, session?.projectName, location.state?.resumeData]);
 
   // Redirect if no session
   useEffect(() => {
