@@ -93,11 +93,59 @@ const parseDomainAnalysisResult = (data: any): DomainAnalysisResult | null => {
   };
 };
 
-// Helper to parse AiAnalysisJson which can be either camelCase or snake_case
+// Helper to check if an object looks like a DomainAnalysisResult
+const isDomainAnalysisResult = (obj: any): boolean => {
+  if (!obj || typeof obj !== 'object') return false;
+  // Check for DomainAnalysisResult-specific fields
+  return (
+    (obj.analysis_summary || obj.analysisSummary) ||
+    (obj.identified_domains || obj.identifiedDomains) ||
+    (obj.recommended_microservices_count || obj.recommendedMicroservicesCount)
+  );
+};
+
+// Helper to parse AiAnalysisJson which can be either:
+// 1. RoundAnalysisModel (contains round_metadata, questions, etc.)
+// 2. DomainAnalysisResult directly (contains analysis_summary, identified_domains, etc.)
 const parseAiAnalysisJson = (jsonString: string): RoundAnalysisModel | null => {
   try {
     const parsed = JSON.parse(jsonString);
+    
+    // Check if the parsed object is actually a DomainAnalysisResult directly
+    // (not wrapped in RoundAnalysisModel)
+    if (isDomainAnalysisResult(parsed) && !parsed.round_metadata && !parsed.roundMetadata) {
+      // Wrap DomainAnalysisResult in a minimal RoundAnalysisModel
+      return {
+        round_metadata: {
+          round_number: 0,
+          confidence_score_before: 0,
+          confidence_score_after_expected: parsed.analysis_summary?.confidence_score || parsed.analysisSummary?.confidenceScore || 0,
+          questions_count: 0,
+          requires_another_round: parsed.analysis_summary?.requires_followup ?? parsed.analysisSummary?.requiresFollowup ?? false,
+          reasoning: parsed.analysis_summary?.reasoning || parsed.analysisSummary?.reasoning || null,
+        },
+        questions: [],
+        refined_domain_analysis: null,
+        updated_domains: [],
+        next_round_focus: null,
+        last_analysis_data: parseDomainAnalysisResult(parsed),
+        roundId: 0,
+        roundNumber: 0,
+      };
+    }
+    
+    // Standard RoundAnalysisModel parsing
     // Normalize property names - API might return camelCase or snake_case
+    
+    // Try to get last_analysis_data from multiple possible sources
+    let lastAnalysisData = parsed.last_analysis_data || parsed.lastAnalysisData || parsed.LastAnalysisData;
+    
+    // If no dedicated last_analysis_data, check if the parsed object itself contains DomainAnalysisResult fields
+    // that should be treated as the domain analysis
+    if (!lastAnalysisData && isDomainAnalysisResult(parsed)) {
+      lastAnalysisData = parsed;
+    }
+    
     return {
       round_metadata: parsed.round_metadata || parsed.roundMetadata || {
         round_number: parsed.round_metadata?.round_number || parsed.roundMetadata?.roundNumber || 0,
@@ -128,7 +176,7 @@ const parseAiAnalysisJson = (jsonString: string): RoundAnalysisModel | null => {
         new_probable_entities: d.new_probable_entities || d.newProbableEntities || null,
       })),
       next_round_focus: parsed.next_round_focus || parsed.nextRoundFocus || null,
-      last_analysis_data: parseDomainAnalysisResult(parsed.last_analysis_data || parsed.lastAnalysisData || parsed.LastAnalysisData),
+      last_analysis_data: parseDomainAnalysisResult(lastAnalysisData),
       roundId: parsed.roundId || parsed.round_id || 0,
       roundNumber: parsed.roundNumber || parsed.round_number || 0,
     };
