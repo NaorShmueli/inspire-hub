@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Download,
   PlayCircle,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -357,6 +358,14 @@ const Dashboard = () => {
             <span className="text-sm text-muted-foreground hidden sm:block">
               {user?.email}
             </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/my-plan")}
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              My Plan
+            </Button>
             <Button variant="ghost" size="sm" onClick={logout}>
               <LogOut className="w-4 h-4 mr-2" />
               Logout

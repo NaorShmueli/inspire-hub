@@ -70,16 +70,19 @@ export const Navbar = () => {
 
           {/* Right side - Auth & Credits */}
           <div className="hidden md:flex items-center gap-3">
-            {isAuthenticated ? (
+              {isAuthenticated ? (
               <>
                 {/* Credit Balance */}
                 {creditBalance !== null && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+                  <Link
+                    to="/my-plan"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+                  >
                     <Coins className="w-4 h-4 text-primary" />
                     <span className="text-sm font-medium text-primary">
                       {creditBalance}
                     </span>
-                  </div>
+                  </Link>
                 )}
 
                 {/* User Menu */}
@@ -141,12 +144,16 @@ export const Navbar = () => {
               {isAuthenticated ? (
                 <>
                   {creditBalance !== null && (
-                    <div className="flex items-center gap-2 px-4 py-3">
+                    <Link
+                      to="/my-plan"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg hover:bg-primary/10 transition-colors"
+                    >
                       <Coins className="w-4 h-4 text-primary" />
                       <span className="text-sm font-medium">
                         {creditBalance} credits
                       </span>
-                    </div>
+                    </Link>
                   )}
                   <Link to="/dashboard" onClick={() => setIsOpen(false)}>
                     <Button variant="outline" size="lg" className="w-full">
