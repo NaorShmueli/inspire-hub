@@ -40,10 +40,10 @@ export interface SessionMetadata {
 }
 
 export interface FoundationQuestion {
-  questionId: number;
+  question_id: number;
   sectionId: number;
   questionOrder: number;
-  questionText: string | null;
+  question: string | null;
   questionTypeId: number;
   questionTypeName: string | null;
   placeholder: string | null;
@@ -62,26 +62,26 @@ export interface SubmitAnswersRequest {
 }
 
 export interface Question {
-  questionId: number;
-  questionText: string | null;
+  question_id: number;
+  question: string | null;
   reason: string | null;
-  affectsDomains: string[] | null;
+  affects_domains: string[] | null;
   priority: string | null;
-  expectedAnswerType: string | null;
-  followUpIfAnswer: Record<string, string> | null;
+  expected_answer_type: string | null;
+  follow_up_if_answer: Record<string, string> | null;
 }
 
 export interface RoundMetadata {
-  roundNumber: number;
-  confidenceScoreBefore: number;
-  confidenceScoreAfterExpected: number;
-  questionsCount: number;
-  requiresAnotherRound: boolean;
+  round_number: number;
+  confidence_score_before: number;
+  confidence_score_after_expected: number;
+  questions_count: number;
+  requires_another_round: boolean;
   reasoning: string | null;
 }
 
 export interface ChangeFromPrevious {
-  changeType: string | null;
+  change_type: string | null;
   description: string | null;
 }
 
@@ -92,24 +92,24 @@ export interface IdentifiedRisk {
 }
 
 export interface RefinedDomainAnalysis {
-  changesFromPrevious: ChangeFromPrevious[] | null;
-  identifiedRisks: IdentifiedRisk[] | null;
-  assumptionsToValidate: string[] | null;
+  changes_from_previous: ChangeFromPrevious[] | null;
+  identified_risks: IdentifiedRisk[] | null;
+  assumptions_to_validate: string[] | null;
 }
 
 export interface UpdatedDomain {
-  domainName: string | null;
-  estimatedEntities: number;
+  domain_name: string | null;
+  estimated_entities: number;
   changes: string | null;
-  newProbableEntities: string[] | null;
+  new_probable_entities: string[] | null;
 }
 
 export interface RoundAnalysisModel {
-  roundMetadata: RoundMetadata;
+  round_metadata: RoundMetadata;
   questions: Question[] | null;
-  refinedDomainAnalysis: RefinedDomainAnalysis;
-  updatedDomains: UpdatedDomain[] | null;
-  nextRoundFocus: string[] | null;
+  refined_domain_analysis: RefinedDomainAnalysis;
+  updated_domains: UpdatedDomain[] | null;
+  next_round_focus: string[] | null;
   roundId: number;
   roundNumber: number;
 }
