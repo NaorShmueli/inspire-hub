@@ -14,7 +14,19 @@ import {
   PlayCircle,
   CreditCard,
   Search,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -271,6 +283,30 @@ const Dashboard = () => {
     }
   };
 
+  const handleDelete = async (sessionId: number, projectName: string) => {
+    try {
+      await apiClient.deleteSession(sessionId);
+      // Remove from both lists
+      setCompletedSessions((prev) =>
+        prev.filter((s) => s.sessionId !== sessionId)
+      );
+      setInAnalyzeSessions((prev) =>
+        prev.filter((s) => s.sessionId !== sessionId)
+      );
+      toast({
+        title: "Project deleted",
+        description: `"${projectName}" has been permanently deleted`,
+      });
+    } catch (error) {
+      console.error("Failed to delete session:", error);
+      toast({
+        title: "Failed to delete project",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   const renderSessionCard = (
     session: ConversationSession,
     isCompleted: boolean
@@ -306,25 +342,66 @@ const Dashboard = () => {
             </div>
           )}
 
-          {isCompleted ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => handleDownload(session.sessionId, e)}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download
-            </Button>
-          ) : (
-            <Button
-              variant="hero-outline"
-              size="sm"
-              onClick={(e) => handleContinue(session.sessionId, e)}
-            >
-              <PlayCircle className="w-4 h-4 mr-2" />
-              Continue
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                  <AlertDialogDescription className="space-y-2">
+                    <p>
+                      Are you sure you want to delete "{session.projectName}"?
+                    </p>
+                    <p className="font-medium text-destructive">
+                      This will permanently delete all domains, microservices,
+                      files, and session analysis data. This action cannot be
+                      undone.
+                    </p>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() =>
+                      handleDelete(session.sessionId, session.projectName || "")
+                    }
+                  >
+                    Delete Forever
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {isCompleted ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => handleDownload(session.sessionId, e)}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            ) : (
+              <Button
+                variant="hero-outline"
+                size="sm"
+                onClick={(e) => handleContinue(session.sessionId, e)}
+              >
+                <PlayCircle className="w-4 h-4 mr-2" />
+                Continue
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>

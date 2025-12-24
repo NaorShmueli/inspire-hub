@@ -198,6 +198,13 @@ class ApiClient {
     return this.request<SessionMetadata>(`/conversation/metadata/${sessionId}`);
   }
 
+  // Delete session
+  async deleteSession(sessionId: number): Promise<void> {
+    return this.request<void>(`/conversation/delete/${sessionId}`, {
+      method: "DELETE",
+    });
+  }
+
   // Plans endpoints
   async getPlans(): Promise<StrategyResult<PlanEntity[]>> {
     return this.request<StrategyResult<PlanEntity[]>>("/Plans/details");
