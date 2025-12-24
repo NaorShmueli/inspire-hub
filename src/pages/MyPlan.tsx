@@ -75,14 +75,17 @@ const MyPlan = () => {
         cancelUrl: `${window.location.origin}/error`,
       });
 
-      if (result.url) {
-        window.location.href = result.url;
+      // API returns checkoutUrl for Stripe redirect
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+      } else {
+        throw new Error("No checkout URL received");
       }
     } catch (error) {
       console.error("Failed to buy pack:", error);
       toast({
         title: "Purchase failed",
-        description: "Please try again",
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {

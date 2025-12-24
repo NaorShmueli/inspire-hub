@@ -207,8 +207,8 @@ class ApiClient {
   }
 
   // Subscription endpoints
-  async subscribe(data: SubscribeRequest): Promise<{ url: string }> {
-    return this.request<{ url: string }>("/StripeSubscription/subscribe", {
+  async subscribe(data: SubscribeRequest): Promise<{ sessionId: string; checkoutUrl: string }> {
+    return this.request<{ sessionId: string; checkoutUrl: string }>("/StripeSubscription/subscribe", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -221,8 +221,8 @@ class ApiClient {
     });
   }
 
-  async buyCreditPack(data: CreditPackRequest): Promise<{ url: string }> {
-    return this.request<{ url: string }>("/StripeSubscription/buy/pack", {
+  async buyCreditPack(data: CreditPackRequest): Promise<{ sessionId: string; checkoutUrl: string }> {
+    return this.request<{ sessionId: string; checkoutUrl: string }>("/StripeSubscription/buy/pack", {
       method: "POST",
       body: JSON.stringify(data),
     });

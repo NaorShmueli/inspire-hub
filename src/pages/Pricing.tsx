@@ -88,9 +88,9 @@ const Pricing = () => {
         cancelUrl: `${window.location.origin}/pricing?subscription=cancelled`,
       });
 
-      if (response.url) {
+      if (response.checkoutUrl) {
         // Redirect to Stripe Checkout
-        window.location.href = response.url;
+        window.location.href = response.checkoutUrl;
       } else {
         toast({
           title: "Subscription initiated",
