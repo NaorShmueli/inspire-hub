@@ -9,6 +9,10 @@ import type {
   SubscribeRequest,
   StrategyResult,
   UserCreditsEntity,
+  ConversationSession,
+  SessionMetadata,
+  CreditPackEntity,
+  CreditPackRequest,
 } from "./api-types";
 
 const API_BASE_URL = "http://localhost:5145/api";
@@ -85,6 +89,11 @@ class ApiClient {
       if (text) {
         return JSON.parse(text) as T;
       }
+      return {} as T;
+    }
+
+    // Handle 204 No Content
+    if (response.status === 204) {
       return {} as T;
     }
 
@@ -178,9 +187,23 @@ class ApiClient {
     );
   }
 
+  // Get sessions by status (completed or In analyze)
+  async getSessionsByStatus(status: string): Promise<ConversationSession[]> {
+    return this.request<ConversationSession[]>(`/conversation/all/by/${status}`);
+  }
+
+  // Get session metadata with rounds
+  async getSessionMetadata(sessionId: number): Promise<SessionMetadata> {
+    return this.request<SessionMetadata>(`/conversation/metadata/${sessionId}`);
+  }
+
   // Plans endpoints
   async getPlans(): Promise<StrategyResult<PlanEntity[]>> {
     return this.request<StrategyResult<PlanEntity[]>>("/Plans/details");
+  }
+
+  async getCreditPacks(): Promise<StrategyResult<CreditPackEntity[]>> {
+    return this.request<StrategyResult<CreditPackEntity[]>>("/Plans/creditPacks");
   }
 
   // Subscription endpoints
@@ -195,6 +218,13 @@ class ApiClient {
     return this.request<void>("/StripeSubscription/cancel", {
       method: "POST",
       body: JSON.stringify({ userId }),
+    });
+  }
+
+  async buyCreditPack(data: CreditPackRequest): Promise<{ url: string }> {
+    return this.request<{ url: string }>("/StripeSubscription/buy/pack", {
+      method: "POST",
+      body: JSON.stringify(data),
     });
   }
 
