@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,19 +10,15 @@ import {
   Loader2,
   LogOut,
   ChevronRight,
+  Download,
+  PlayCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
-
-interface ProjectSession {
-  sessionId: number;
-  projectName: string;
-  status: "in_progress" | "generating" | "completed";
-  confidenceScore: number | null;
-  createdAt: string;
-}
+import type { ConversationSession } from "@/lib/api-types";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -31,9 +27,36 @@ const Dashboard = () => {
   const [projectDescription, setProjectDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
+  const [activeTab, setActiveTab] = useState("completed");
+  const [completedSessions, setCompletedSessions] = useState<ConversationSession[]>([]);
+  const [inAnalyzeSessions, setInAnalyzeSessions] = useState<ConversationSession[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock sessions for demo - in production, fetch from API
-  const [sessions] = useState<ProjectSession[]>([]);
+  // Fetch sessions on mount and tab change
+  useEffect(() => {
+    const fetchSessions = async () => {
+      setIsLoading(true);
+      try {
+        const [completed, inAnalyze] = await Promise.all([
+          apiClient.getSessionsByStatus("completed"),
+          apiClient.getSessionsByStatus("In analyze"),
+        ]);
+        setCompletedSessions(completed);
+        setInAnalyzeSessions(inAnalyze);
+      } catch (error) {
+        console.error("Failed to fetch sessions:", error);
+        toast({
+          title: "Failed to load projects",
+          description: "Please try refreshing the page",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSessions();
+  }, []);
 
   const handleCreateProject = async () => {
     if (!projectName.trim()) {
@@ -52,8 +75,6 @@ const Dashboard = () => {
         projectName: projectName.trim(),
         projectDescription: projectDescription.trim() || null,
       });
-      console.log("Start session response:", response);
-      // Navigate to questionnaire with session data
       navigate(`/project/${response.session.sessionId}/questionnaire`, {
         state: {
           session: response.session,
@@ -73,16 +94,138 @@ const Dashboard = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-      case "generating":
-        return <Loader2 className="w-5 h-5 text-primary animate-spin" />;
-      default:
-        return <Clock className="w-5 h-5 text-muted-foreground" />;
+  const handleDownload = async (sessionId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const blob = await apiClient.downloadProject(sessionId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `project-${sessionId}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({
+        title: "Download started",
+        description: "Your project package is downloading",
+      });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Download failed",
+        description: "Please try again",
+        variant: "destructive",
+      });
     }
   };
+
+  const handleContinue = async (sessionId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const metadata = await apiClient.getSessionMetadata(sessionId);
+      
+      // Find the last round that needs answers
+      const rounds = metadata.rounds || [];
+      let resumeRound = rounds.find(r => r.aiAnalysisJson === null);
+      
+      if (resumeRound) {
+        // Parse questionsAnswersJson to get the questions
+        const questionsAnswers = resumeRound.questionsAnswersJson 
+          ? JSON.parse(resumeRound.questionsAnswersJson) 
+          : {};
+        
+        navigate(`/project/${sessionId}/questionnaire`, {
+          state: {
+            session: metadata.session,
+            questions: Object.keys(questionsAnswers).map((key, i) => ({
+              questionId: i + 1,
+              questionText: key,
+            })),
+            resumeRound: resumeRound.roundNumber,
+          },
+        });
+      } else {
+        // No incomplete round, go to status
+        navigate(`/project/${sessionId}/status`);
+      }
+    } catch (error) {
+      console.error("Failed to continue session:", error);
+      toast({
+        title: "Failed to continue",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderSessionCard = (session: ConversationSession, isCompleted: boolean) => (
+    <motion.div
+      key={session.sessionId}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-card border border-border/50 rounded-xl p-6 hover:border-primary/30 transition-colors"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {isCompleted ? (
+            <CheckCircle2 className="w-5 h-5 text-green-500" />
+          ) : (
+            <Clock className="w-5 h-5 text-primary" />
+          )}
+          <div>
+            <h3 className="font-semibold">{session.projectName}</h3>
+            <p className="text-sm text-muted-foreground">
+              Created {new Date(session.createdAt).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {session.confidenceScore && (
+            <div className="text-right">
+              <div className="text-sm font-medium">
+                {Math.round(session.confidenceScore * 100)}%
+              </div>
+              <div className="text-xs text-muted-foreground">Confidence</div>
+            </div>
+          )}
+
+          {isCompleted ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => handleDownload(session.sessionId, e)}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download
+            </Button>
+          ) : (
+            <Button
+              variant="hero-outline"
+              size="sm"
+              onClick={(e) => handleContinue(session.sessionId, e)}
+            >
+              <PlayCircle className="w-4 h-4 mr-2" />
+              Continue
+            </Button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  const renderEmptyState = (message: string) => (
+    <div className="bg-card/50 border border-border/50 rounded-2xl p-12 text-center">
+      <FolderOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+      <h3 className="text-lg font-medium mb-2">No projects</h3>
+      <p className="text-muted-foreground mb-6">{message}</p>
+      <Button variant="hero-outline" onClick={() => setShowNewProject(true)}>
+        <Plus className="w-4 h-4 mr-2" />
+        Create New Project
+      </Button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -121,9 +264,7 @@ const Dashboard = () => {
             <div>
               <h1 className="text-3xl font-bold mb-2">
                 Welcome back,{" "}
-                <span className="text-gradient">
-                  {user?.name || "Developer"}
-                </span>
+                <span className="text-gradient">{user?.name || "Developer"}</span>
               </h1>
               <p className="text-muted-foreground">
                 Create new architecture packages or continue existing projects
@@ -209,68 +350,51 @@ const Dashboard = () => {
             </motion.div>
           )}
 
-          {/* Projects List */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Your Projects</h2>
+          {/* Projects Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="completed" className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" />
+                Completed ({completedSessions.length})
+              </TabsTrigger>
+              <TabsTrigger value="in-analyze" className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                In Analyze ({inAnalyzeSessions.length})
+              </TabsTrigger>
+            </TabsList>
 
-            {sessions.length === 0 ? (
-              <div className="bg-card/50 border border-border/50 rounded-2xl p-12 text-center">
-                <FolderOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                <h3 className="text-lg font-medium mb-2">No projects yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Start your first project to generate architecture packages
-                </p>
-                <Button
-                  variant="hero-outline"
-                  onClick={() => setShowNewProject(true)}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Project
-                </Button>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {sessions.map((session) => (
-                  <motion.div
-                    key={session.sessionId}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="bg-card border border-border/50 rounded-xl p-6 hover:border-primary/30 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/project/${session.sessionId}`)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        {getStatusIcon(session.status)}
-                        <div>
-                          <h3 className="font-semibold">
-                            {session.projectName}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Created{" "}
-                            {new Date(session.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
+            <TabsContent value="completed" className="space-y-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : completedSessions.length === 0 ? (
+                renderEmptyState("No completed projects yet")
+              ) : (
+                <div className="grid gap-4">
+                  {completedSessions.map((session) =>
+                    renderSessionCard(session, true)
+                  )}
+                </div>
+              )}
+            </TabsContent>
 
-                      <div className="flex items-center gap-4">
-                        {session.confidenceScore && (
-                          <div className="text-right">
-                            <div className="text-sm font-medium">
-                              {Math.round(session.confidenceScore * 100)}%
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Confidence
-                            </div>
-                          </div>
-                        )}
-                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
+            <TabsContent value="in-analyze" className="space-y-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : inAnalyzeSessions.length === 0 ? (
+                renderEmptyState("No projects in analysis")
+              ) : (
+                <div className="grid gap-4">
+                  {inAnalyzeSessions.map((session) =>
+                    renderSessionCard(session, false)
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </motion.div>
       </main>
     </div>

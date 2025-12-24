@@ -12,6 +12,8 @@ const AuthCallback = () => {
   useEffect(() => {
     const processCallback = async () => {
       const userId = searchParams.get("userId");
+      const name = searchParams.get("name");
+      const email = searchParams.get("email");
       const error = searchParams.get("error");
 
       if (error) {
@@ -26,10 +28,14 @@ const AuthCallback = () => {
 
       if (userId) {
         try {
-          await handleAuthCallback(Number(userId));
+          await handleAuthCallback(
+            Number(userId),
+            name || undefined,
+            email || undefined
+          );
           toast({
             title: "Welcome!",
-            description: "You have successfully signed in",
+            description: `You have successfully signed in${name ? `, ${name}` : ""}`,
           });
           navigate("/dashboard");
         } catch (err) {

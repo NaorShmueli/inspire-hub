@@ -21,11 +21,29 @@ export interface ConversationSession {
   completedAt: string | null;
 }
 
+export interface ConversationRounds {
+  roundId: number;
+  sessionId: number;
+  roundNumber: number;
+  roundType: string | null;
+  questionsAnswersJson: string | null;
+  aiAnalysisJson: string | null;
+  confidenceScore: number | null;
+  createdAt: string;
+  answeredAt: string | null;
+  analyzedAt: string | null;
+}
+
+export interface SessionMetadata {
+  session: ConversationSession;
+  rounds: ConversationRounds[] | null;
+}
+
 export interface FoundationQuestion {
-  question_id: number;
+  questionId: number;
   sectionId: number;
   questionOrder: number;
-  question: string | null;
+  questionText: string | null;
   questionTypeId: number;
   questionTypeName: string | null;
   placeholder: string | null;
@@ -44,26 +62,26 @@ export interface SubmitAnswersRequest {
 }
 
 export interface Question {
-  question_id: number;
-  question: string | null;
+  questionId: number;
+  questionText: string | null;
   reason: string | null;
-  affects_domains: string[] | null;
+  affectsDomains: string[] | null;
   priority: string | null;
-  expected_answer_type: string | null;
-  follow_up_if_answer: Record<string, string> | null;
+  expectedAnswerType: string | null;
+  followUpIfAnswer: Record<string, string> | null;
 }
 
 export interface RoundMetadata {
-  round_number: number;
-  confidence_score_before: number;
-  confidence_score_after_expected: number;
-  questions_count: number;
-  requires_another_round: boolean;
+  roundNumber: number;
+  confidenceScoreBefore: number;
+  confidenceScoreAfterExpected: number;
+  questionsCount: number;
+  requiresAnotherRound: boolean;
   reasoning: string | null;
 }
 
 export interface ChangeFromPrevious {
-  change_type: string | null;
+  changeType: string | null;
   description: string | null;
 }
 
@@ -74,24 +92,24 @@ export interface IdentifiedRisk {
 }
 
 export interface RefinedDomainAnalysis {
-  changes_from_previous: ChangeFromPrevious[] | null;
-  identified_risks: IdentifiedRisk[] | null;
-  assumptions_to_validate: string[] | null;
+  changesFromPrevious: ChangeFromPrevious[] | null;
+  identifiedRisks: IdentifiedRisk[] | null;
+  assumptionsToValidate: string[] | null;
 }
 
 export interface UpdatedDomain {
-  domain_name: string | null;
-  estimated_entities: number;
+  domainName: string | null;
+  estimatedEntities: number;
   changes: string | null;
-  new_probable_entities: string[] | null;
+  newProbableEntities: string[] | null;
 }
 
 export interface RoundAnalysisModel {
-  round_metadata: RoundMetadata;
+  roundMetadata: RoundMetadata;
   questions: Question[] | null;
-  refined_domain_analysis: RefinedDomainAnalysis;
-  updated_domains: UpdatedDomain[] | null;
-  next_round_focus: string[] | null;
+  refinedDomainAnalysis: RefinedDomainAnalysis;
+  updatedDomains: UpdatedDomain[] | null;
+  nextRoundFocus: string[] | null;
   roundId: number;
   roundNumber: number;
 }
@@ -138,6 +156,23 @@ export interface PlanEntity {
   isDomainOnly: boolean;
   pricingDisplay: string | null;
   highlights: PlanHighlight[] | null;
+}
+
+export interface CreditPackEntity {
+  creditPackId: number;
+  name: string | null;
+  description: string | null;
+  credits: number;
+  price: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreditPackRequest {
+  userId: number;
+  packId: number;
+  successUrl: string | null;
+  cancelUrl: string | null;
 }
 
 export interface UserCreditsEntity {

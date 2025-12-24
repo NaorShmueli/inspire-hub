@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: () => void;
   logout: () => void;
-  handleAuthCallback: (userId: number) => Promise<void>;
+  handleAuthCallback: (userId: number, name?: string, email?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,18 +38,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
-  const handleAuthCallback = useCallback(async (userId: number) => {
+  const handleAuthCallback = useCallback(async (userId: number, name?: string, email?: string) => {
     setIsLoading(true);
     try {
       const result = await apiClient.createToken(userId);
       if (result.data?.accessToken) {
         apiClient.setTokens(result.data.accessToken);
-        // For now, create a basic user object
-        // In production, you'd fetch user details from the API
+        // Use name and email from URL params if available
         const newUser: User = {
           id: userId,
-          email: "user@example.com", // This should come from the API
-          name: "User", // This should come from the API
+          email: email || "user@example.com",
+          name: name || "User",
         };
         localStorage.setItem("user", JSON.stringify(newUser));
         setUser(newUser);
