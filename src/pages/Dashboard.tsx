@@ -17,6 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
+import {
+  cacheFoundationQuestions,
+  getCachedFoundationQuestions,
+} from "@/lib/foundation-question-cache";
 import { toast } from "@/hooks/use-toast";
 import type { ConversationSession } from "@/lib/api-types";
 
@@ -75,6 +79,9 @@ const Dashboard = () => {
         projectName: projectName.trim(),
         projectDescription: projectDescription.trim() || null,
       });
+
+      cacheFoundationQuestions(response.session.sessionId, response.foundationQuestions);
+
       navigate(`/project/${response.session.sessionId}/questionnaire`, {
         state: {
           session: response.session,
@@ -85,8 +92,7 @@ const Dashboard = () => {
       console.error("Failed to create project:", error);
       toast({
         title: "Failed to create project",
-        description:
-          error instanceof Error ? error.message : "Please try again",
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -149,7 +155,10 @@ const Dashboard = () => {
 
       // Find the first incomplete round (aiAnalysisJson null OR empty string)
       const incompleteRound = normalizedRounds.find(
-        (r: any) => r.aiAnalysisJson === null || r.aiAnalysisJson === "" || r.aiAnalysisJson === "null"
+        (r: any) =>
+          r.aiAnalysisJson === null ||
+          r.aiAnalysisJson === "" ||
+          r.aiAnalysisJson === "null"
       );
 
       if (incompleteRound) {
@@ -177,16 +186,39 @@ const Dashboard = () => {
         return;
       }
 
-      // No rounds yet - restart session with existing sessionId to get foundation questions
+      // No rounds yet - resume foundation questions (no API call needed)
       if (normalizedRounds.length === 0) {
+        const cachedQuestions = getCachedFoundationQuestions(sessionId);
+
+        if (cachedQuestions && cachedQuestions.length > 0) {
+          navigate(`/project/${sessionId}/questionnaire`, {
+            state: {
+              session: metadata.session,
+              questions: cachedQuestions,
+            },
+          });
+          return;
+        }
+
+        // Fallback: start a new session (backend doesn't support restarting by sessionId)
         const session = metadata.session;
+        const safeProjectName = (session.projectName ?? "").trim() || `Project ${sessionId}`;
+
         const response = await apiClient.startSession({
           userId: user?.id || 1,
-          projectName: session.projectName || "",
+          projectName: safeProjectName,
           projectDescription: session.projectDescription || null,
-          sessionId: sessionId,
         });
-        navigate(`/project/${sessionId}/questionnaire`, {
+
+        cacheFoundationQuestions(response.session.sessionId, response.foundationQuestions);
+
+        toast({
+          title: "Started a new draft",
+          description:
+            "We couldn't restore the original draft questions, so we started a new session.",
+        });
+
+        navigate(`/project/${response.session.sessionId}/questionnaire`, {
           state: {
             session: response.session,
             questions: response.foundationQuestions,
