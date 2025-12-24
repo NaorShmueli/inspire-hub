@@ -28,6 +28,7 @@ import type {
   UpdatedDomain,
   ConversationRounds,
 } from "@/lib/api-types";
+import { getCachedFoundationQuestions } from "@/lib/foundation-question-cache";
 
 interface ResumeData {
   rounds: ConversationRounds[];
@@ -38,6 +39,49 @@ interface ResumeData {
   showDomainApproval?: boolean;
   lastAnalysis?: RoundAnalysisModel;
 }
+
+// Helper to parse AiAnalysisJson which can be either camelCase or snake_case
+const parseAiAnalysisJson = (jsonString: string): RoundAnalysisModel | null => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    // Normalize property names - API might return camelCase or snake_case
+    return {
+      round_metadata: parsed.round_metadata || parsed.roundMetadata || {
+        round_number: parsed.round_metadata?.round_number || parsed.roundMetadata?.roundNumber || 0,
+        confidence_score_before: parsed.round_metadata?.confidence_score_before || parsed.roundMetadata?.confidenceScoreBefore || 0,
+        confidence_score_after_expected: parsed.round_metadata?.confidence_score_after_expected || parsed.roundMetadata?.confidenceScoreAfterExpected || 0,
+        questions_count: parsed.round_metadata?.questions_count || parsed.roundMetadata?.questionsCount || 0,
+        requires_another_round: parsed.round_metadata?.requires_another_round ?? parsed.roundMetadata?.requiresAnotherRound ?? true,
+        reasoning: parsed.round_metadata?.reasoning || parsed.roundMetadata?.reasoning || null,
+      },
+      questions: (parsed.questions || []).map((q: any) => ({
+        question_id: q.question_id || q.questionId || 0,
+        question: q.question || q.questionText || null,
+        reason: q.reason || null,
+        affects_domains: q.affects_domains || q.affectsDomains || null,
+        priority: q.priority || null,
+        expected_answer_type: q.expected_answer_type || q.expectedAnswerType || null,
+        follow_up_if_answer: q.follow_up_if_answer || q.followUpIfAnswer || null,
+      })),
+      refined_domain_analysis: parsed.refined_domain_analysis || parsed.refinedDomainAnalysis || {
+        changes_from_previous: parsed.refined_domain_analysis?.changes_from_previous || parsed.refinedDomainAnalysis?.changesFromPrevious || null,
+        identified_risks: parsed.refined_domain_analysis?.identified_risks || parsed.refinedDomainAnalysis?.identifiedRisks || null,
+        assumptions_to_validate: parsed.refined_domain_analysis?.assumptions_to_validate || parsed.refinedDomainAnalysis?.assumptionsToValidate || null,
+      },
+      updated_domains: (parsed.updated_domains || parsed.updatedDomains || []).map((d: any) => ({
+        domain_name: d.domain_name || d.domainName || null,
+        estimated_entities: d.estimated_entities || d.estimatedEntities || 0,
+        changes: d.changes || null,
+        new_probable_entities: d.new_probable_entities || d.newProbableEntities || null,
+      })),
+      next_round_focus: parsed.next_round_focus || parsed.nextRoundFocus || null,
+      roundId: parsed.roundId || parsed.round_id || 0,
+      roundNumber: parsed.roundNumber || parsed.round_number || 0,
+    };
+  } catch {
+    return null;
+  }
+};
 
 const Questionnaire = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -85,6 +129,35 @@ const Questionnaire = () => {
   const initializeFromResumeData = (resumeData: ResumeData) => {
     const chatMessages: ChatMessage[] = [];
     
+    // Get cached foundation questions to resolve Q1, Q2, etc. to actual question text
+    const cachedFoundationQuestions = getCachedFoundationQuestions(Number(sessionId));
+    
+    // Helper to get question text from Q1, Q2 keys
+    const getQuestionText = (key: string, roundNumber: number, previousAnalysis: RoundAnalysisModel | null): string => {
+      // If key is already a full question text (not Q1/Q2/FQ1 format), return as-is
+      if (!key.match(/^(Q|FQ)\d+$/i)) {
+        return key;
+      }
+      
+      // For foundation round (round 0 or round that uses Q1, Q2 format)
+      if (key.match(/^Q\d+$/i) && cachedFoundationQuestions) {
+        const qNum = parseInt(key.replace(/^Q/i, "")) - 1;
+        if (qNum >= 0 && qNum < cachedFoundationQuestions.length) {
+          return cachedFoundationQuestions[qNum].question || key;
+        }
+      }
+      
+      // For follow-up rounds, look for questions in the previous round's AI analysis
+      if (key.match(/^FQ\d+$/i) && previousAnalysis?.questions) {
+        const qNum = parseInt(key.replace(/^FQ/i, "")) - 1;
+        if (qNum >= 0 && qNum < previousAnalysis.questions.length) {
+          return previousAnalysis.questions[qNum].question || key;
+        }
+      }
+      
+      return key;
+    };
+    
     // Add welcome message
     chatMessages.push({
       id: "welcome",
@@ -105,9 +178,12 @@ const Questionnaire = () => {
       return aiAnalysisJson === null || aiAnalysisJson === "" || aiAnalysisJson === "null";
     });
 
+    // Track the previous round's analysis for question resolution
+    let previousRoundAnalysis: RoundAnalysisModel | null = null;
+
     // Build history from all rounds
-    resumeData.rounds.forEach((round) => {
-      const aiAnalysisJson =
+    resumeData.rounds.forEach((round, roundIndex) => {
+      const aiAnalysisJsonRaw =
         (round as any).aiAnalysisJson ??
         (round as any).ai_analysis_json ??
         (round as any).AiAnalysisJson ??
@@ -134,7 +210,7 @@ const Questionnaire = () => {
         null;
 
       const isCompleteRound =
-        aiAnalysisJson && aiAnalysisJson !== "" && aiAnalysisJson !== "null";
+        aiAnalysisJsonRaw && aiAnalysisJsonRaw !== "" && aiAnalysisJsonRaw !== "null";
 
       // Parse questions/answers for this round
       let questionsAnswers: Record<string, string> = {};
@@ -148,20 +224,28 @@ const Questionnaire = () => {
 
       // For completed rounds, show the full Q&A history
       if (isCompleteRound) {
-        const analysis = JSON.parse(aiAnalysisJson) as RoundAnalysisModel;
+        // Parse the AI analysis using our helper
+        const analysis = parseAiAnalysisJson(aiAnalysisJsonRaw);
+        
+        if (!analysis) {
+          console.error("Failed to parse AI analysis JSON for round", roundNumber);
+          return;
+        }
 
         // Add round header
         chatMessages.push({
           id: `round-${roundNumber}-header`,
           type: "system",
-          content: `Round ${roundNumber}`,
+          content: roundNumber === 0 ? "Foundation Questions" : `Round ${roundNumber}`,
           timestamp: new Date(createdAt || Date.now()),
         });
 
         // Display all Q&A pairs for this round
         const questionKeys = Object.keys(questionsAnswers);
-        questionKeys.forEach((questionText, i) => {
-          const answer = questionsAnswers[questionText];
+        questionKeys.forEach((key, i) => {
+          const answer = questionsAnswers[key];
+          // Get the actual question text
+          const questionText = getQuestionText(key, roundNumber, previousRoundAnalysis);
           
           // Add question
           chatMessages.push({
@@ -182,19 +266,26 @@ const Questionnaire = () => {
           }
         });
 
-        // Add the AI analysis summary after the Q&A
+        // Add the AI analysis summary after the Q&A with domain information
+        const confidencePercent = Math.round(
+          (analysis.round_metadata?.confidence_score_after_expected || 0) * 100
+        );
+        
+        let analysisContent = `Analysis complete. Confidence: ${confidencePercent}%`;
+        
+        // Add reasoning if available
+        if (analysis.round_metadata?.reasoning) {
+          analysisContent += `\n\n${analysis.round_metadata.reasoning}`;
+        }
+        
         chatMessages.push({
           id: `round-${roundNumber}-analysis`,
           type: "ai",
-          content: `Round ${roundNumber} analysis complete. Confidence: ${Math.round(
-            (analysis.round_metadata?.confidence_score_after_expected || 0) * 100
-          )}%`,
+          content: analysisContent,
           timestamp: new Date(analyzedAt || createdAt || Date.now()),
           metadata: {
             roundNumber,
-            confidenceScore:
-              (analysis.round_metadata?.confidence_score_after_expected || 0) *
-              100,
+            confidenceScore: confidencePercent,
             domains: analysis.updated_domains || [],
             analysis,
           },
@@ -202,11 +293,12 @@ const Questionnaire = () => {
 
         // Update confidence from last analyzed round
         if (analysis.round_metadata) {
-          setConfidenceScore(
-            analysis.round_metadata.confidence_score_after_expected * 100
-          );
+          setConfidenceScore(confidencePercent);
         }
         setRoundAnalysis(analysis);
+        
+        // Store this analysis for the next round's question resolution
+        previousRoundAnalysis = analysis;
       }
     });
 
@@ -230,13 +322,13 @@ const Questionnaire = () => {
         (incompleteRound as any).RoundNumber ??
         0;
       setCurrentRound(roundNumber);
-      setIsFoundationPhase(false);
+      setIsFoundationPhase(roundNumber === 0);
 
-      // Build questions from questionsAnswers keys
+      // Build questions from questionsAnswers keys with proper text resolution
       const questionKeys = Object.keys(resumeData.questionsAnswers);
       const questions: Question[] = questionKeys.map((key, i) => ({
         question_id: i + 1,
-        question: key,
+        question: getQuestionText(key, roundNumber, previousRoundAnalysis),
         reason: null,
         affects_domains: null,
         priority: null,
@@ -250,7 +342,7 @@ const Questionnaire = () => {
       chatMessages.push({
         id: `round-${roundNumber}-header`,
         type: "system",
-        content: `Resuming Round ${roundNumber}`,
+        content: roundNumber === 0 ? "Resuming Foundation Questions" : `Resuming Round ${roundNumber}`,
         timestamp: new Date(),
       });
 
@@ -275,11 +367,13 @@ const Questionnaire = () => {
         // Show history of answered questions for incomplete round
         questionKeys.forEach((key, i) => {
           const answer = resumeData.questionsAnswers![key];
+          const questionText = getQuestionText(key, roundNumber, previousRoundAnalysis);
+          
           if (answer && answer !== "") {
             chatMessages.push({
               id: `incomplete-round-q-${i}`,
               type: "ai",
-              content: key,
+              content: questionText,
               timestamp: new Date(),
             });
             chatMessages.push({
