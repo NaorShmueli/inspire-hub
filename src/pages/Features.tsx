@@ -16,39 +16,39 @@ import { Layout } from "@/components/layout/Layout";
 const features = [
   {
     icon: Layers,
-    title: "5-Layer Architecture",
-    description: "Complete enterprise architecture with API, Models, DAL, Business Logic, and Validators layers.",
-    highlights: ["Repository Pattern", "Unit of Work", "Clean Architecture", "DDD Principles"],
+    title: "Complete Architecture Package",
+    description: "Get C4 architecture diagrams, system context, container views, and component diagrams for your entire system.",
+    highlights: ["C4 Models", "System Architecture", "Container Diagrams", "Component Views"],
   },
   {
     icon: FileCode2,
-    title: "50-65 Files Generated",
-    description: "Complete Visual Studio solution with all necessary files for a production microservice.",
-    highlights: ["Controllers", "DTOs", "Entities", "Repositories"],
+    title: ".NET Core 8 Solutions",
+    description: "Each microservice comes as a complete Visual Studio solution with boilerplate implementation ready to extend.",
+    highlights: [".NET Core 8", "Visual Studio Solution", "Boilerplate Code", "Best Practices"],
   },
   {
     icon: Zap,
-    title: "30 Second Generation",
-    description: "From specifications to complete, buildable code in under 30 seconds.",
-    highlights: ["Instant Results", "No Waiting", "Rapid Iteration", "Quick Feedback"],
+    title: "DBML Schema Generation",
+    description: "Database schemas generated in DBML format, ready for visualization and database creation.",
+    highlights: ["DBML Format", "Entity Relationships", "Database Design", "Schema Visualization"],
   },
   {
     icon: Shield,
-    title: "Zero Compilation Errors",
-    description: "Generated code builds successfully out of the box. No debugging required.",
-    highlights: ["Type Safety", "Proper Imports", "Valid Syntax", "Tested Output"],
+    title: "OpenAPI Specifications",
+    description: "Complete OpenAPI YAML files for each microservice, documenting all endpoints and models.",
+    highlights: ["OpenAPI 3.0", "YAML Format", "API Documentation", "Swagger Ready"],
   },
   {
     icon: Package,
-    title: "Docker & Kubernetes Ready",
-    description: "Includes Dockerfile, docker-compose, and optional Kubernetes manifests.",
-    highlights: ["Containerized", "Cloud-Ready", "Scalable", "Portable"],
+    title: "Downloadable ZIP Package",
+    description: "Everything packaged into a single ZIP file - architecture files, microservice solutions, schemas, and specs.",
+    highlights: ["ZIP Download", "Organized Structure", "Ready to Use", "Complete Package"],
   },
   {
     icon: GitBranch,
-    title: "Multiple Input Formats",
-    description: "Accept DBML schemas, OpenAPI specs, or use our AI-guided questionnaire.",
-    highlights: ["DBML Support", "OpenAPI", "Natural Language", "Flexible Input"],
+    title: "AI-Guided Domain Analysis",
+    description: "Intelligent questionnaire that analyzes your requirements and identifies domain boundaries with confidence scoring.",
+    highlights: ["Smart Questions", "Confidence Scoring", "Domain Detection", "Iterative Refinement"],
   },
 ];
 
@@ -139,14 +139,14 @@ const Features = () => {
           >
             <div className="grid md:grid-cols-2 gap-6">
               {[
-                { title: "Visual Studio Solution", desc: "Complete .sln with 5 projects" },
-                { title: "API Layer", desc: "RESTful controllers with full CRUD" },
-                { title: "Models Layer", desc: "Entities, DTOs, Enums, Responses" },
-                { title: "Data Access Layer", desc: "Repository pattern, UnitOfWork" },
-                { title: "Business Logic Layer", desc: "Service interfaces & implementations" },
-                { title: "Validators Layer", desc: "FluentValidation rules for all DTOs" },
-                { title: "Docker Support", desc: "Dockerfile and docker-compose.yml" },
-                { title: "Documentation", desc: "README with setup instructions" },
+                { title: "C4 Architecture Files", desc: "System context, container, and component diagrams" },
+                { title: ".NET Core 8 Solutions", desc: "Complete Visual Studio solutions per microservice" },
+                { title: "DBML Schema Files", desc: "Database schema definitions for each service" },
+                { title: "OpenAPI YAML Specs", desc: "Full API documentation in OpenAPI 3.0 format" },
+                { title: "Domain Analysis Report", desc: "Identified domains with confidence scores" },
+                { title: "Microservice Boundaries", desc: "Clear service separation based on DDD" },
+                { title: "Entity Definitions", desc: "All entities and their relationships" },
+                { title: "ZIP Package Download", desc: "Everything organized in a single download" },
               ].map((item, index) => (
                 <div
                   key={item.title}
