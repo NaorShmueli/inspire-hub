@@ -75,12 +75,12 @@ const Questionnaire = () => {
 
       const firstQuestion = foundationQuestions[0];
       const questionMessage: ChatMessage = {
-        id: `q-${firstQuestion.questionId}`,
+        id: `q-${firstQuestion.question_id}`,
         type: "ai",
-        content: firstQuestion.questionText || "",
+        content: firstQuestion.question || "",
         timestamp: new Date(),
         metadata: {
-          questionId: firstQuestion.questionId,
+          questionId: firstQuestion.question_id,
         },
       };
 
@@ -126,10 +126,10 @@ const Questionnaire = () => {
     };
     setMessages((prev) => [...prev, userMessage]);
 
-    // Store answer - use questionId for both types
+    // Store answer - use question_id for both types
     const questionKey = isFoundationPhase
-      ? `Q${(currentQuestion as FoundationQuestion).questionId}`
-      : `FQ${(currentQuestion as Question).questionId}`;
+      ? `Q${(currentQuestion as FoundationQuestion).question_id}`
+      : `FQ${(currentQuestion as Question).question_id}`;
     const updatedAnswers = { ...answers, [questionKey]: userAnswer };
     setAnswers(updatedAnswers);
 
@@ -141,11 +141,11 @@ const Questionnaire = () => {
 
         setTimeout(() => {
           const aiMessage: ChatMessage = {
-            id: `q-${nextQ.questionId}`,
+            id: `q-${nextQ.question_id}`,
             type: "ai",
-            content: nextQ.questionText || "",
+            content: nextQ.question || "",
             timestamp: new Date(),
-            metadata: { questionId: nextQ.questionId },
+            metadata: { questionId: nextQ.question_id },
           };
           setMessages((prev) => [...prev, aiMessage]);
         }, 500);
@@ -161,11 +161,11 @@ const Questionnaire = () => {
 
         setTimeout(() => {
           const aiMessage: ChatMessage = {
-            id: `fq-${nextQ.questionId}`,
+            id: `fq-${nextQ.question_id}`,
             type: "ai",
-            content: nextQ.questionText || "",
+            content: nextQ.question || "",
             timestamp: new Date(),
-            metadata: { questionId: nextQ.questionId },
+            metadata: { questionId: nextQ.question_id },
           };
           setMessages((prev) => [...prev, aiMessage]);
         }, 500);
@@ -199,7 +199,7 @@ const Questionnaire = () => {
 
       setRoundAnalysis(response);
       setConfidenceScore(
-        response.roundMetadata.confidenceScoreAfterExpected * 100
+        response.round_metadata.confidence_score_after_expected * 100
       );
       setCurrentRound(response.roundNumber);
       setIsFoundationPhase(false);
@@ -212,9 +212,9 @@ const Questionnaire = () => {
         id: `analysis-${response.roundNumber}`,
         type: "ai",
         content: `I've analyzed your requirements. Current confidence: ${Math.round(
-          response.roundMetadata.confidenceScoreAfterExpected * 100
+          response.round_metadata.confidence_score_after_expected * 100
         )}%. ${
-          response.roundMetadata.requiresAnotherRound
+          response.round_metadata.requires_another_round
             ? "I need a few more details to refine the architecture."
             : "We've reached the confidence threshold!"
         }`,
@@ -222,26 +222,26 @@ const Questionnaire = () => {
         metadata: {
           roundNumber: response.roundNumber,
           confidenceScore:
-            response.roundMetadata.confidenceScoreAfterExpected * 100,
-          domains: response.updatedDomains || [],
+            response.round_metadata.confidence_score_after_expected * 100,
+          domains: response.updated_domains || [],
           analysis: response,
         },
       };
       setMessages((prev) => [...prev, analysisMessage]);
 
       // If threshold reached, show approval UI
-      if (!response.roundMetadata.requiresAnotherRound) {
+      if (!response.round_metadata.requires_another_round) {
         setShowDomainApproval(true);
       } else if (response.questions && response.questions.length > 0) {
         // Add first followup question
         setTimeout(() => {
           const firstFollowup = response.questions![0];
           const followupMessage: ChatMessage = {
-            id: `fq-${firstFollowup.questionId}`,
+            id: `fq-${firstFollowup.question_id}`,
             type: "ai",
-            content: firstFollowup.questionText || "",
+            content: firstFollowup.question || "",
             timestamp: new Date(),
-            metadata: { questionId: firstFollowup.questionId },
+            metadata: { questionId: firstFollowup.question_id },
           };
           setMessages((prev) => [...prev, followupMessage]);
         }, 1000);
@@ -279,7 +279,7 @@ const Questionnaire = () => {
 
       setRoundAnalysis(response);
       setConfidenceScore(
-        response.roundMetadata.confidenceScoreAfterExpected * 100
+        response.round_metadata.confidence_score_after_expected * 100
       );
 
       // Add analysis message
@@ -289,9 +289,9 @@ const Questionnaire = () => {
         content: `Round ${
           response.roundNumber
         } complete. Confidence: ${Math.round(
-          response.roundMetadata.confidenceScoreAfterExpected * 100
+          response.round_metadata.confidence_score_after_expected * 100
         )}%. ${
-          response.roundMetadata.requiresAnotherRound
+          response.round_metadata.requires_another_round
             ? "Let me ask a few more questions."
             : "Domain recognition complete!"
         }`,
@@ -299,14 +299,14 @@ const Questionnaire = () => {
         metadata: {
           roundNumber: response.roundNumber,
           confidenceScore:
-            response.roundMetadata.confidenceScoreAfterExpected * 100,
-          domains: response.updatedDomains || [],
+            response.round_metadata.confidence_score_after_expected * 100,
+          domains: response.updated_domains || [],
           analysis: response,
         },
       };
       setMessages((prev) => [...prev, analysisMessage]);
 
-      if (response.roundMetadata.requiresAnotherRound) {
+      if (response.round_metadata.requires_another_round) {
         // Continue with more questions
         setCurrentRound(response.roundNumber);
         setFollowupQuestions(response.questions || []);
@@ -317,11 +317,11 @@ const Questionnaire = () => {
           setTimeout(() => {
             const nextQ = response.questions![0];
             const nextMessage: ChatMessage = {
-              id: `fq-${nextQ.questionId}-r${response.roundNumber}`,
+              id: `fq-${nextQ.question_id}-r${response.roundNumber}`,
               type: "ai",
-              content: nextQ.questionText || "",
+              content: nextQ.question || "",
               timestamp: new Date(),
-              metadata: { questionId: nextQ.questionId },
+              metadata: { questionId: nextQ.question_id },
             };
             setMessages((prev) => [...prev, nextMessage]);
           }, 1000);
@@ -524,20 +524,20 @@ const Questionnaire = () => {
               </div>
 
               {/* Domain summary */}
-              {roundAnalysis.updatedDomains &&
-                roundAnalysis.updatedDomains.length > 0 && (
+              {roundAnalysis.updated_domains &&
+                roundAnalysis.updated_domains.length > 0 && (
                   <div className="mb-4 space-y-2">
                     <p className="text-sm font-medium">Identified Domains:</p>
                     <div className="flex flex-wrap gap-2">
-                      {roundAnalysis.updatedDomains.map((domain, i) => (
+                      {roundAnalysis.updated_domains.map((domain, i) => (
                         <span
                           key={i}
                           className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium flex items-center gap-2"
                         >
                           <Layers className="w-3 h-3" />
-                          {domain.domainName}
+                          {domain.domain_name}
                           <span className="text-xs opacity-70">
-                            ({domain.estimatedEntities} entities)
+                            ({domain.estimated_entities} entities)
                           </span>
                         </span>
                       ))}
@@ -546,8 +546,8 @@ const Questionnaire = () => {
                 )}
 
               {/* Risks warning */}
-              {roundAnalysis.refinedDomainAnalysis?.identifiedRisks &&
-                roundAnalysis.refinedDomainAnalysis.identifiedRisks.length >
+              {roundAnalysis.refined_domain_analysis?.identified_risks &&
+                roundAnalysis.refined_domain_analysis.identified_risks.length >
                   0 && (
                   <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
                     <div className="flex items-center gap-2 mb-2">
@@ -557,7 +557,7 @@ const Questionnaire = () => {
                       </span>
                     </div>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      {roundAnalysis.refinedDomainAnalysis.identifiedRisks.map(
+                      {roundAnalysis.refined_domain_analysis.identified_risks.map(
                         (risk, i) => (
                           <li key={i} className="flex items-start gap-2">
                             <span className="text-destructive">•</span>
@@ -659,20 +659,20 @@ function DomainAnalysisPanel({
       </p>
       <div className="space-y-2">
         {domains.map((domain, i) => {
-          const isExpanded = expandedDomains.has(domain.domainName || "");
+          const isExpanded = expandedDomains.has(domain.domain_name || "");
           return (
             <div key={i} className="rounded-lg bg-secondary/30 overflow-hidden">
               <button
-                onClick={() => toggleDomainExpand(domain.domainName || "")}
+                onClick={() => toggleDomainExpand(domain.domain_name || "")}
                 className="w-full flex items-center justify-between p-3 hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-primary" />
                   <span className="font-medium text-sm">
-                    {domain.domainName}
+                    {domain.domain_name}
                   </span>
                   <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                    {domain.estimatedEntities} entities
+                    {domain.estimated_entities} entities
                   </span>
                 </div>
                 {isExpanded ? (
@@ -696,14 +696,14 @@ function DomainAnalysisPanel({
                           {domain.changes}
                         </p>
                       )}
-                      {domain.newProbableEntities &&
-                        domain.newProbableEntities.length > 0 && (
+                      {domain.new_probable_entities &&
+                        domain.new_probable_entities.length > 0 && (
                           <div>
                             <p className="text-xs font-medium mb-1">
                               Probable Entities:
                             </p>
                             <div className="flex flex-wrap gap-1">
-                              {domain.newProbableEntities.map((entity, j) => (
+                              {domain.new_probable_entities.map((entity, j) => (
                                 <span
                                   key={j}
                                   className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded flex items-center gap-1"
@@ -725,10 +725,10 @@ function DomainAnalysisPanel({
       </div>
 
       {/* Next Round Focus */}
-      {analysis?.nextRoundFocus && analysis.nextRoundFocus.length > 0 && (
+      {analysis?.next_round_focus && analysis.next_round_focus.length > 0 && (
         <div className="mt-3 pt-3 border-t border-border/50">
           <p className="text-xs text-muted-foreground">
-            Next focus: {analysis.nextRoundFocus.join(", ")}
+            Next focus: {analysis.next_round_focus.join(", ")}
           </p>
         </div>
       )}
