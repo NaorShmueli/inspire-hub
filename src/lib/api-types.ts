@@ -4,7 +4,6 @@ export interface StartSessionRequest {
   userId: number;
   projectName: string | null;
   projectDescription?: string | null;
-  sessionId?: number | null;
 }
 
 export interface ConversationSession {
