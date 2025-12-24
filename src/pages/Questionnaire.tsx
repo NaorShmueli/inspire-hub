@@ -97,20 +97,32 @@ const Questionnaire = () => {
 
     // Build history from completed rounds
     resumeData.rounds.forEach((round) => {
-      if (round.aiAnalysisJson) {
+      const aiAnalysisJson =
+        (round as any).aiAnalysisJson ??
+        (round as any).ai_analysis_json ??
+        (round as any).AiAnalysisJson ??
+        null;
+
+      if (aiAnalysisJson) {
         // This round has analysis - show summary
-        const analysis = JSON.parse(round.aiAnalysisJson) as RoundAnalysisModel;
-        
+        const analysis = JSON.parse(aiAnalysisJson) as RoundAnalysisModel;
+
+        const roundNumber = (round as any).roundNumber ?? (round as any).round_number ?? (round as any).RoundNumber ?? 0;
+        const analyzedAt = (round as any).analyzedAt ?? (round as any).analyzed_at ?? (round as any).AnalyzedAt ?? null;
+        const createdAt = (round as any).createdAt ?? (round as any).created_at ?? (round as any).CreatedAt ?? null;
+
         chatMessages.push({
-          id: `round-${round.roundNumber}-summary`,
+          id: `round-${roundNumber}-summary`,
           type: "ai",
-          content: `Round ${round.roundNumber} completed. Confidence: ${Math.round(
+          content: `Round ${roundNumber} completed. Confidence: ${Math.round(
             (analysis.round_metadata?.confidence_score_after_expected || 0) * 100
           )}%`,
-          timestamp: new Date(round.analyzedAt || round.createdAt),
+          timestamp: new Date(analyzedAt || createdAt || Date.now()),
           metadata: {
-            roundNumber: round.roundNumber,
-            confidenceScore: (analysis.round_metadata?.confidence_score_after_expected || 0) * 100,
+            roundNumber,
+            confidenceScore:
+              (analysis.round_metadata?.confidence_score_after_expected || 0) *
+              100,
             domains: analysis.updated_domains || [],
             analysis,
           },
@@ -118,7 +130,9 @@ const Questionnaire = () => {
 
         // Update confidence from last analyzed round
         if (analysis.round_metadata) {
-          setConfidenceScore(analysis.round_metadata.confidence_score_after_expected * 100);
+          setConfidenceScore(
+            analysis.round_metadata.confidence_score_after_expected * 100
+          );
         }
         setRoundAnalysis(analysis);
       }
