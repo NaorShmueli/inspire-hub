@@ -155,9 +155,11 @@ const Pricing = () => {
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {plans.map((plan, index) => {
+            {plans.map((plan, index) => {
                 const Icon = getPlanIcon(plan.name);
                 const isPopular = plan.name?.toLowerCase() === 'professional' || plan.name?.toLowerCase() === 'pro';
+                const isFreePlan = plan.name?.toLowerCase() === 'free' || plan.priceMonthly === 0;
+                const showButton = !isFreePlan || !isAuthenticated;
                 
                 return (
                   <motion.div
@@ -222,14 +224,16 @@ const Pricing = () => {
                       </ul>
                     )}
 
-                    <Button
-                      variant={isPopular ? "hero" : "outline"}
-                      size="lg"
-                      className="w-full"
-                      onClick={() => handleSelectPlan(plan)}
-                    >
-                      {plan.isContactSales ? "Contact Sales" : "Get Started"}
-                    </Button>
+                    {showButton && (
+                      <Button
+                        variant={isPopular ? "hero" : "outline"}
+                        size="lg"
+                        className="w-full"
+                        onClick={() => handleSelectPlan(plan)}
+                      >
+                        {plan.isContactSales ? "Contact Sales" : "Get Started"}
+                      </Button>
+                    )}
                   </motion.div>
                 );
               })}
