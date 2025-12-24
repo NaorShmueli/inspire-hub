@@ -95,26 +95,98 @@ const Questionnaire = () => {
       timestamp: new Date(),
     });
 
-    // Build history from completed rounds
+    // Find the incomplete round (if any)
+    const incompleteRound = resumeData.rounds.find((r) => {
+      const aiAnalysisJson =
+        (r as any).aiAnalysisJson ??
+        (r as any).ai_analysis_json ??
+        (r as any).AiAnalysisJson ??
+        null;
+      return aiAnalysisJson === null || aiAnalysisJson === "" || aiAnalysisJson === "null";
+    });
+
+    // Build history from all rounds
     resumeData.rounds.forEach((round) => {
       const aiAnalysisJson =
         (round as any).aiAnalysisJson ??
         (round as any).ai_analysis_json ??
         (round as any).AiAnalysisJson ??
         null;
+      const questionsAnswersJson =
+        (round as any).questionsAnswersJson ??
+        (round as any).questions_answers_json ??
+        (round as any).QuestionsAnswersJson ??
+        null;
+      const roundNumber =
+        (round as any).roundNumber ??
+        (round as any).round_number ??
+        (round as any).RoundNumber ??
+        0;
+      const analyzedAt =
+        (round as any).analyzedAt ??
+        (round as any).analyzed_at ??
+        (round as any).AnalyzedAt ??
+        null;
+      const createdAt =
+        (round as any).createdAt ??
+        (round as any).created_at ??
+        (round as any).CreatedAt ??
+        null;
 
-      if (aiAnalysisJson) {
-        // This round has analysis - show summary
+      const isCompleteRound =
+        aiAnalysisJson && aiAnalysisJson !== "" && aiAnalysisJson !== "null";
+
+      // Parse questions/answers for this round
+      let questionsAnswers: Record<string, string> = {};
+      if (questionsAnswersJson) {
+        try {
+          questionsAnswers = JSON.parse(questionsAnswersJson);
+        } catch {
+          questionsAnswers = {};
+        }
+      }
+
+      // For completed rounds, show the full Q&A history
+      if (isCompleteRound) {
         const analysis = JSON.parse(aiAnalysisJson) as RoundAnalysisModel;
 
-        const roundNumber = (round as any).roundNumber ?? (round as any).round_number ?? (round as any).RoundNumber ?? 0;
-        const analyzedAt = (round as any).analyzedAt ?? (round as any).analyzed_at ?? (round as any).AnalyzedAt ?? null;
-        const createdAt = (round as any).createdAt ?? (round as any).created_at ?? (round as any).CreatedAt ?? null;
-
+        // Add round header
         chatMessages.push({
-          id: `round-${roundNumber}-summary`,
+          id: `round-${roundNumber}-header`,
+          type: "system",
+          content: `Round ${roundNumber}`,
+          timestamp: new Date(createdAt || Date.now()),
+        });
+
+        // Display all Q&A pairs for this round
+        const questionKeys = Object.keys(questionsAnswers);
+        questionKeys.forEach((questionText, i) => {
+          const answer = questionsAnswers[questionText];
+          
+          // Add question
+          chatMessages.push({
+            id: `round-${roundNumber}-q-${i}`,
+            type: "ai",
+            content: questionText,
+            timestamp: new Date(createdAt || Date.now()),
+          });
+
+          // Add answer if exists
+          if (answer && answer !== "") {
+            chatMessages.push({
+              id: `round-${roundNumber}-a-${i}`,
+              type: "user",
+              content: answer,
+              timestamp: new Date(createdAt || Date.now()),
+            });
+          }
+        });
+
+        // Add the AI analysis summary after the Q&A
+        chatMessages.push({
+          id: `round-${roundNumber}-analysis`,
           type: "ai",
-          content: `Round ${roundNumber} completed. Confidence: ${Math.round(
+          content: `Round ${roundNumber} analysis complete. Confidence: ${Math.round(
             (analysis.round_metadata?.confidence_score_after_expected || 0) * 100
           )}%`,
           timestamp: new Date(analyzedAt || createdAt || Date.now()),
@@ -150,9 +222,13 @@ const Questionnaire = () => {
       return;
     }
 
-    // Handle incomplete round
-    if (resumeData.currentRound && resumeData.questionsAnswers) {
-      const roundNumber = resumeData.currentRound.roundNumber;
+    // Handle incomplete round - continue from where user left off
+    if (incompleteRound && resumeData.questionsAnswers) {
+      const roundNumber =
+        (incompleteRound as any).roundNumber ??
+        (incompleteRound as any).round_number ??
+        (incompleteRound as any).RoundNumber ??
+        0;
       setCurrentRound(roundNumber);
       setIsFoundationPhase(false);
 
@@ -170,15 +246,16 @@ const Questionnaire = () => {
 
       setFollowupQuestions(questions);
 
+      // Add round header for incomplete round
+      chatMessages.push({
+        id: `round-${roundNumber}-header`,
+        type: "system",
+        content: `Resuming Round ${roundNumber}`,
+        timestamp: new Date(),
+      });
+
       // If answers are empty, start from first question
       if (resumeData.hasEmptyAnswers) {
-        chatMessages.push({
-          id: "resume-message",
-          type: "system",
-          content: `Resuming Round ${roundNumber}. Let's continue with the questions.`,
-          timestamp: new Date(),
-        });
-
         if (questions.length > 0) {
           chatMessages.push({
             id: `fq-${questions[0].question_id}`,
@@ -195,18 +272,18 @@ const Questionnaire = () => {
           (v) => v && v !== ""
         ).length;
         
-        // Show history of answered questions
+        // Show history of answered questions for incomplete round
         questionKeys.forEach((key, i) => {
           const answer = resumeData.questionsAnswers![key];
           if (answer && answer !== "") {
             chatMessages.push({
-              id: `fq-${i}-q`,
+              id: `incomplete-round-q-${i}`,
               type: "ai",
               content: key,
               timestamp: new Date(),
             });
             chatMessages.push({
-              id: `fq-${i}-a`,
+              id: `incomplete-round-a-${i}`,
               type: "user",
               content: answer,
               timestamp: new Date(),
