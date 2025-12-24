@@ -11,9 +11,6 @@ import {
   Send,
   Sparkles,
   Layers,
-  Box,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -25,12 +22,11 @@ import type {
   RoundAnalysisModel,
   ConversationSession,
   ChatMessage,
-  UpdatedDomain,
   ConversationRounds,
   DomainAnalysisResult,
-  IdentifiedDomain,
 } from "@/lib/api-types";
 import { getCachedFoundationQuestions } from "@/lib/foundation-question-cache";
+import { DomainAnalysisPanel } from "@/components/DomainAnalysisPanel";
 
 interface ResumeData {
   rounds: ConversationRounds[];
@@ -170,9 +166,6 @@ const Questionnaire = () => {
   const [followupQuestions, setFollowupQuestions] = useState<Question[]>([]);
   const [followupIndex, setFollowupIndex] = useState(0);
   const [showDomainApproval, setShowDomainApproval] = useState(false);
-  const [expandedDomains, setExpandedDomains] = useState<Set<string>>(
-    new Set()
-  );
   const [isResuming, setIsResuming] = useState(false);
 
   // Handle resume from Dashboard
@@ -788,17 +781,6 @@ const Questionnaire = () => {
     }
   };
 
-  const toggleDomainExpand = (domainName: string) => {
-    setExpandedDomains((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(domainName)) {
-        newSet.delete(domainName);
-      } else {
-        newSet.add(domainName);
-      }
-      return newSet;
-    });
-  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -902,16 +884,13 @@ const Questionnaire = () => {
                   <p className="whitespace-pre-wrap">{message.content}</p>
 
                   {/* Domain Analysis Panel */}
-                  {(message.metadata?.domains && message.metadata.domains.length > 0) || 
-                   message.metadata?.domainAnalysis ? (
-                      <DomainAnalysisPanel
-                        domains={message.metadata?.domains || []}
-                        analysis={message.metadata?.analysis}
-                        domainAnalysis={message.metadata?.domainAnalysis}
-                        expandedDomains={expandedDomains}
-                        toggleDomainExpand={toggleDomainExpand}
-                      />
-                    ) : null}
+                  {message.metadata?.domainAnalysis && (
+                    <DomainAnalysisPanel
+                      domainAnalysis={message.metadata.domainAnalysis}
+                      domains={message.metadata?.domains}
+                      analysis={message.metadata?.analysis}
+                    />
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -1052,431 +1031,5 @@ const Questionnaire = () => {
     </div>
   );
 };
-
-// Domain Analysis Panel Component
-function DomainAnalysisPanel({
-  domains,
-  analysis,
-  domainAnalysis,
-  expandedDomains,
-  toggleDomainExpand,
-}: {
-  domains: UpdatedDomain[];
-  analysis?: RoundAnalysisModel;
-  domainAnalysis?: DomainAnalysisResult;
-  expandedDomains: Set<string>;
-  toggleDomainExpand: (name: string) => void;
-}) {
-  // Use identified_domains from domainAnalysis if available, otherwise fall back to updated_domains
-  const identifiedDomains = domainAnalysis?.identified_domains;
-  const hasDetailedDomains = identifiedDomains && identifiedDomains.length > 0;
-  
-  return (
-    <div className="mt-4 pt-4 border-t border-border/50">
-      {/* Analysis Summary */}
-      {domainAnalysis?.analysis_summary && (
-        <div className="mb-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium">Analysis Summary</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span className="text-muted-foreground">Domains Identified:</span>{" "}
-              <span className="font-medium">{domainAnalysis.analysis_summary.total_domains_identified}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Confidence:</span>{" "}
-              <span className="font-medium text-primary">
-                {Math.round((domainAnalysis.analysis_summary.confidence_score || 0) * 100)}%
-              </span>
-            </div>
-          </div>
-          {domainAnalysis.analysis_summary.reasoning && (
-            <p className="text-xs text-muted-foreground mt-2">
-              {domainAnalysis.analysis_summary.reasoning}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Recommended Microservices Count */}
-      {domainAnalysis?.recommended_microservices_count && (
-        <div className="mb-4 p-3 rounded-lg bg-secondary/30 border border-border/50">
-          <div className="flex items-center gap-2 mb-2">
-            <Layers className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium">Recommended Microservices</span>
-          </div>
-          <div className="flex gap-4 text-xs mb-2">
-            <div className="text-center">
-              <div className="text-muted-foreground">Min</div>
-              <div className="font-bold text-lg">{domainAnalysis.recommended_microservices_count.minimum}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-primary">Optimal</div>
-              <div className="font-bold text-lg text-primary">{domainAnalysis.recommended_microservices_count.optimal}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-muted-foreground">Max</div>
-              <div className="font-bold text-lg">{domainAnalysis.recommended_microservices_count.maximum}</div>
-            </div>
-          </div>
-          {domainAnalysis.recommended_microservices_count.rationale && (
-            <p className="text-xs text-muted-foreground">
-              {domainAnalysis.recommended_microservices_count.rationale}
-            </p>
-          )}
-          {domainAnalysis.recommended_microservices_count.optimal_service_names && 
-           domainAnalysis.recommended_microservices_count.optimal_service_names.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {domainAnalysis.recommended_microservices_count.optimal_service_names.map((name, i) => (
-                <span key={i} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
-                  {name}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Identified Domains - Detailed View */}
-      {hasDetailedDomains && (
-        <>
-          <p className="text-xs font-medium text-muted-foreground mb-3">
-            Identified Domains
-          </p>
-          <div className="space-y-2 mb-4">
-            {identifiedDomains.map((domain, i) => {
-              const isExpanded = expandedDomains.has(domain.domain_name || "");
-              return (
-                <div key={i} className="rounded-lg bg-secondary/30 overflow-hidden">
-                  <button
-                    onClick={() => toggleDomainExpand(domain.domain_name || "")}
-                    className="w-full flex items-center justify-between p-3 hover:bg-secondary/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-primary" />
-                      <span className="font-medium text-sm">{domain.domain_name}</span>
-                      <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                        {domain.estimated_entities} entities
-                      </span>
-                      <span className="text-xs text-primary/70 bg-primary/10 px-2 py-0.5 rounded">
-                        {Math.round((domain.confidence || 0) * 100)}% confidence
-                      </span>
-                    </div>
-                    {isExpanded ? (
-                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
-
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="border-t border-border/50"
-                      >
-                        <div className="p-3 space-y-3">
-                          {domain.description && (
-                            <p className="text-xs text-muted-foreground">{domain.description}</p>
-                          )}
-                          
-                          {domain.business_capability && (
-                            <div>
-                              <p className="text-xs font-medium mb-1">Business Capability:</p>
-                              <p className="text-xs text-muted-foreground">{domain.business_capability}</p>
-                            </div>
-                          )}
-
-                          {domain.key_responsibilities && domain.key_responsibilities.length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium mb-1">Key Responsibilities:</p>
-                              <ul className="text-xs text-muted-foreground space-y-1">
-                                {domain.key_responsibilities.map((resp, j) => (
-                                  <li key={j} className="flex items-start gap-1">
-                                    <span className="text-primary">•</span> {resp}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {domain.probable_entities && domain.probable_entities.length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium mb-1">Probable Entities:</p>
-                              <div className="flex flex-wrap gap-1">
-                                {domain.probable_entities.map((entity, j) => (
-                                  <span key={j} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded flex items-center gap-1">
-                                    <Box className="w-3 h-3" />
-                                    {entity}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {domain.user_types_served && domain.user_types_served.length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium mb-1">User Types Served:</p>
-                              <div className="flex flex-wrap gap-1">
-                                {domain.user_types_served.map((user, j) => (
-                                  <span key={j} className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded">
-                                    {user}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {/* Fallback to simple domains if no detailed analysis */}
-      {!hasDetailedDomains && domains.length > 0 && (
-        <>
-          <p className="text-xs font-medium text-muted-foreground mb-3">
-            Identified Domains & Microservices
-          </p>
-          <div className="space-y-2">
-            {domains.map((domain, i) => {
-              const isExpanded = expandedDomains.has(domain.domain_name || "");
-              return (
-                <div key={i} className="rounded-lg bg-secondary/30 overflow-hidden">
-                  <button
-                    onClick={() => toggleDomainExpand(domain.domain_name || "")}
-                    className="w-full flex items-center justify-between p-3 hover:bg-secondary/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-primary" />
-                      <span className="font-medium text-sm">{domain.domain_name}</span>
-                      <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                        {domain.estimated_entities} entities
-                      </span>
-                    </div>
-                    {isExpanded ? (
-                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
-
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="border-t border-border/50"
-                      >
-                        <div className="p-3 space-y-2">
-                          {domain.changes && (
-                            <p className="text-xs text-muted-foreground">{domain.changes}</p>
-                          )}
-                          {domain.new_probable_entities && domain.new_probable_entities.length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium mb-1">Probable Entities:</p>
-                              <div className="flex flex-wrap gap-1">
-                                {domain.new_probable_entities.map((entity, j) => (
-                                  <span key={j} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded flex items-center gap-1">
-                                    <Box className="w-3 h-3" />
-                                    {entity}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {/* Domain Relationships */}
-      {domainAnalysis?.domain_relationships && domainAnalysis.domain_relationships.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-border/50">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Domain Relationships</p>
-          <div className="space-y-2">
-            {domainAnalysis.domain_relationships.map((rel, i) => (
-              <div key={i} className="text-xs p-2 bg-secondary/20 rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-primary">{rel.from_domain}</span>
-                  <span className="text-muted-foreground">→</span>
-                  <span className="font-medium text-primary">{rel.to_domain}</span>
-                  <span className="text-xs bg-secondary px-1.5 py-0.5 rounded">{rel.relationship_type}</span>
-                </div>
-                {rel.description && <p className="text-muted-foreground">{rel.description}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Cross-Cutting Concerns */}
-      {domainAnalysis?.cross_cutting_concerns && domainAnalysis.cross_cutting_concerns.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-border/50">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Cross-Cutting Concerns</p>
-          <div className="space-y-2">
-            {domainAnalysis.cross_cutting_concerns.map((concern, i) => (
-              <div key={i} className="text-xs p-2 bg-secondary/20 rounded-lg">
-                <div className="font-medium mb-1">{concern.concern}</div>
-                {concern.affected_domains && (
-                  <div className="flex flex-wrap gap-1 mb-1">
-                    {concern.affected_domains.map((domain, j) => (
-                      <span key={j} className="px-1.5 py-0.5 bg-primary/10 text-primary rounded">{domain}</span>
-                    ))}
-                  </div>
-                )}
-                {concern.recommendation && (
-                  <p className="text-muted-foreground">{concern.recommendation}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Integration Points */}
-      {domainAnalysis?.integration_points && domainAnalysis.integration_points.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-border/50">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Integration Points</p>
-          <div className="space-y-2">
-            {domainAnalysis.integration_points.map((point, i) => (
-              <div key={i} className="text-xs p-2 bg-secondary/20 rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium">{point.external_system}</span>
-                  <span className="text-muted-foreground">→</span>
-                  <span className="text-primary">{point.integrating_domain}</span>
-                  {point.criticality && (
-                    <span className={`px-1.5 py-0.5 rounded text-xs ${
-                      point.criticality.toLowerCase() === 'high' ? 'bg-destructive/20 text-destructive' :
-                      point.criticality.toLowerCase() === 'medium' ? 'bg-yellow-500/20 text-yellow-600' :
-                      'bg-secondary text-muted-foreground'
-                    }`}>
-                      {point.criticality}
-                    </span>
-                  )}
-                </div>
-                {point.purpose && <p className="text-muted-foreground">{point.purpose}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Potential Issues */}
-      {domainAnalysis?.potential_issues && domainAnalysis.potential_issues.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-border/50">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Potential Issues</p>
-          <div className="space-y-2">
-            {domainAnalysis.potential_issues.map((issue, i) => (
-              <div key={i} className="text-xs p-2 bg-destructive/5 border border-destructive/20 rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="w-3 h-3 text-destructive" />
-                  <span className="font-medium">{issue.issue}</span>
-                  {issue.severity && (
-                    <span className={`px-1.5 py-0.5 rounded text-xs ${
-                      issue.severity.toLowerCase() === 'high' ? 'bg-destructive/20 text-destructive' :
-                      issue.severity.toLowerCase() === 'medium' ? 'bg-yellow-500/20 text-yellow-600' :
-                      'bg-secondary text-muted-foreground'
-                    }`}>
-                      {issue.severity}
-                    </span>
-                  )}
-                </div>
-                {issue.description && <p className="text-muted-foreground mb-1">{issue.description}</p>}
-                {issue.recommendation && (
-                  <p className="text-primary/80">💡 {issue.recommendation}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Scale Considerations */}
-      {domainAnalysis?.scale_considerations && (
-        <div className="mt-4 pt-3 border-t border-border/50">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Scale Considerations</p>
-          <div className="text-xs p-2 bg-secondary/20 rounded-lg">
-            {domainAnalysis.scale_considerations.expected_load && (
-              <p className="mb-1">
-                <span className="font-medium">Expected Load:</span>{" "}
-                <span className="text-muted-foreground">{domainAnalysis.scale_considerations.expected_load}</span>
-              </p>
-            )}
-            {domainAnalysis.scale_considerations.high_traffic_domains && 
-             domainAnalysis.scale_considerations.high_traffic_domains.length > 0 && (
-              <div className="mb-1">
-                <span className="font-medium">High Traffic Domains:</span>{" "}
-                <span className="text-muted-foreground">
-                  {domainAnalysis.scale_considerations.high_traffic_domains.join(", ")}
-                </span>
-              </div>
-            )}
-            {domainAnalysis.scale_considerations.recommendations && 
-             domainAnalysis.scale_considerations.recommendations.length > 0 && (
-              <div>
-                <span className="font-medium">Recommendations:</span>
-                <ul className="text-muted-foreground mt-1 space-y-1">
-                  {domainAnalysis.scale_considerations.recommendations.map((rec, i) => (
-                    <li key={i}>• {rec}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Compliance Impacts */}
-      {domainAnalysis?.compliance_impacts && domainAnalysis.compliance_impacts.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-border/50">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Compliance Impacts</p>
-          <div className="space-y-2">
-            {domainAnalysis.compliance_impacts.map((compliance, i) => (
-              <div key={i} className="text-xs p-2 bg-secondary/20 rounded-lg">
-                <div className="font-medium mb-1">{compliance.regulation}</div>
-                {compliance.affected_domains && (
-                  <div className="flex flex-wrap gap-1 mb-1">
-                    {compliance.affected_domains.map((domain, j) => (
-                      <span key={j} className="px-1.5 py-0.5 bg-primary/10 text-primary rounded">{domain}</span>
-                    ))}
-                  </div>
-                )}
-                {compliance.architectural_impact && (
-                  <p className="text-muted-foreground">{compliance.architectural_impact}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Next Round Focus */}
-      {analysis?.next_round_focus && analysis.next_round_focus.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-border/50">
-          <p className="text-xs text-muted-foreground">
-            Next focus: {analysis.next_round_focus.join(", ")}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default Questionnaire;
