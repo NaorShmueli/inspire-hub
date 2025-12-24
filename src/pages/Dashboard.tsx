@@ -283,7 +283,10 @@ const Dashboard = () => {
     }
   };
 
+  const [deletingSessionId, setDeletingSessionId] = useState<number | null>(null);
+
   const handleDelete = async (sessionId: number, projectName: string) => {
+    setDeletingSessionId(sessionId);
     try {
       await apiClient.deleteSession(sessionId);
       // Remove from both lists
@@ -304,6 +307,8 @@ const Dashboard = () => {
         description: "Please try again",
         variant: "destructive",
       });
+    } finally {
+      setDeletingSessionId(null);
     }
   };
 
@@ -343,7 +348,9 @@ const Dashboard = () => {
           )}
 
           <div className="flex items-center gap-2">
-            <AlertDialog>
+            <AlertDialog
+              open={deletingSessionId === session.sessionId ? false : undefined}
+            >
               <AlertDialogTrigger asChild>
                 <Button
                   variant="ghost"
@@ -354,7 +361,7 @@ const Dashboard = () => {
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete Project</AlertDialogTitle>
                   <AlertDialogDescription className="space-y-2">
@@ -372,9 +379,10 @@ const Dashboard = () => {
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={() =>
-                      handleDelete(session.sessionId, session.projectName || "")
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(session.sessionId, session.projectName || "");
+                    }}
                   >
                     Delete Forever
                   </AlertDialogAction>
