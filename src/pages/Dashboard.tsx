@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
-import type { ConversationSession, SessionMetadata, ConversationRounds } from "@/lib/api-types";
+import type { ConversationSession } from "@/lib/api-types";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -124,31 +124,49 @@ const Dashboard = () => {
     e.stopPropagation();
     try {
       const metadata = await apiClient.getSessionMetadata(sessionId);
-      const rounds = metadata.rounds || [];
-      
-      // Sort rounds by roundNumber to find the latest
-      const sortedRounds = [...rounds].sort((a, b) => a.roundNumber - b.roundNumber);
-      
-      // Find the round where aiAnalysisJson is null (incomplete round)
-      const incompleteRound = sortedRounds.find(r => r.aiAnalysisJson === null);
-      
+      const rawRounds = (metadata as any).rounds || [];
+
+      // Normalize round fields (backend may return different casing)
+      const normalizedRounds = rawRounds
+        .map((r: any) => {
+          const roundNumber = r.roundNumber ?? r.round_number ?? r.RoundNumber ?? 0;
+          const aiAnalysisJson =
+            r.aiAnalysisJson ?? r.ai_analysis_json ?? r.AiAnalysisJson ?? null;
+          const questionsAnswersJson =
+            r.questionsAnswersJson ??
+            r.questions_answers_json ??
+            r.QuestionsAnswersJson ??
+            null;
+
+          return {
+            ...r,
+            roundNumber,
+            aiAnalysisJson,
+            questionsAnswersJson,
+          };
+        })
+        .sort((a: any, b: any) => a.roundNumber - b.roundNumber);
+
+      // Find the first incomplete round (aiAnalysisJson null OR empty string)
+      const incompleteRound = normalizedRounds.find(
+        (r: any) => r.aiAnalysisJson === null || r.aiAnalysisJson === "" || r.aiAnalysisJson === "null"
+      );
+
       if (incompleteRound) {
-        // Parse questionsAnswersJson - it contains questions as keys
-        const questionsAnswers = incompleteRound.questionsAnswersJson 
-          ? JSON.parse(incompleteRound.questionsAnswersJson) 
+        const questionsAnswers = incompleteRound.questionsAnswersJson
+          ? JSON.parse(incompleteRound.questionsAnswersJson)
           : {};
-        
-        // Check if answers are empty (values are empty strings or null)
+
+        // If AiAnalysisJson is null, QuestionsAnswersJson should contain keys with empty values.
         const hasEmptyAnswers = Object.values(questionsAnswers).every(
           (val) => val === "" || val === null
         );
-        
-        // Build resume state with all history data
+
         navigate(`/project/${sessionId}/questionnaire`, {
           state: {
             session: metadata.session,
             resumeData: {
-              rounds: sortedRounds,
+              rounds: normalizedRounds,
               currentRound: incompleteRound,
               questionsAnswers,
               hasEmptyAnswers,
@@ -156,37 +174,36 @@ const Dashboard = () => {
             },
           },
         });
-      } else if (sortedRounds.length > 0) {
-        // All rounds complete, check last round for analysis
-        const lastRound = sortedRounds[sortedRounds.length - 1];
-        const analysis = lastRound.aiAnalysisJson 
-          ? JSON.parse(lastRound.aiAnalysisJson) 
-          : null;
-        
-        // If we have analysis, might need domain approval
-        if (analysis && !analysis.round_metadata?.requires_another_round) {
-          navigate(`/project/${sessionId}/questionnaire`, {
-            state: {
-              session: metadata.session,
-              resumeData: {
-                rounds: sortedRounds,
-                showDomainApproval: true,
-                lastAnalysis: analysis,
-              },
-            },
-          });
-        } else {
-          // Go to status page
-          navigate(`/project/${sessionId}/status`);
-        }
-      } else {
-        // No rounds - start fresh with foundation questions
-        toast({
-          title: "Session needs to be restarted",
-          description: "Please create a new project",
-          variant: "destructive",
-        });
+        return;
       }
+
+      // If nothing is incomplete, still resume questionnaire with history (instead of status)
+      if (normalizedRounds.length > 0) {
+        const lastRound = normalizedRounds[normalizedRounds.length - 1];
+        const analysis = lastRound.aiAnalysisJson
+          ? (JSON.parse(lastRound.aiAnalysisJson) as any)
+          : null;
+
+        navigate(`/project/${sessionId}/questionnaire`, {
+          state: {
+            session: metadata.session,
+            resumeData: {
+              rounds: normalizedRounds,
+              showDomainApproval: Boolean(
+                analysis && !analysis.round_metadata?.requires_another_round
+              ),
+              lastAnalysis: analysis,
+            },
+          },
+        });
+        return;
+      }
+
+      toast({
+        title: "Nothing to resume",
+        description: "This session has no rounds yet.",
+        variant: "destructive",
+      });
     } catch (error) {
       console.error("Failed to continue session:", error);
       toast({
