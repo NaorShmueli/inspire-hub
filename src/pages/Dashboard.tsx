@@ -15,7 +15,16 @@ import {
   CreditCard,
   Search,
   Trash2,
+  ExternalLink,
+  Layers,
+  Database,
+  FileCode,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -586,16 +595,84 @@ const Dashboard = () => {
               </TabsTrigger>
             </TabsList>
 
-            {/* Search Filter */}
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Search by project name..."
-                className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors text-sm"
-              />
+            {/* Search Filter & External Tool Buttons */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative max-w-md flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="Search by project name..."
+                  className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors text-sm"
+                />
+              </div>
+
+              {/* External Tool Buttons */}
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => window.open("https://structurizr.com/dsl", "_blank")}
+                    >
+                      <Layers className="w-4 h-4" />
+                      C4 Editor
+                      <ExternalLink className="w-3 h-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-center">
+                    <p className="font-medium mb-1">C4 Architecture Visualizer</p>
+                    <p className="text-xs text-muted-foreground">
+                      Use this tool to visualize your system architecture. Copy the C4 DSL content from your downloaded package and paste it into the Structurizr editor to generate interactive architecture diagrams.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => window.open("https://dbdiagram.io/d", "_blank")}
+                    >
+                      <Database className="w-4 h-4" />
+                      DBML Editor
+                      <ExternalLink className="w-3 h-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-center">
+                    <p className="font-medium mb-1">Database Schema Visualizer</p>
+                    <p className="text-xs text-muted-foreground">
+                      Use this tool to visualize your database design. Copy the DBML content from each microservice's package and paste it into dbdiagram.io to generate entity-relationship diagrams.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => window.open("https://editor.swagger.io/", "_blank")}
+                    >
+                      <FileCode className="w-4 h-4" />
+                      OpenAPI Editor
+                      <ExternalLink className="w-3 h-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-center">
+                    <p className="font-medium mb-1">REST API Visualizer</p>
+                    <p className="text-xs text-muted-foreground">
+                      Use this tool to visualize your API specifications. Copy the OpenAPI YAML content from each microservice's package and paste it into Swagger Editor to explore endpoints, schemas, and test API calls.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
 
             <TabsContent value="completed" className="space-y-4">
