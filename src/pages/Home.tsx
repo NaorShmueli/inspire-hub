@@ -1,14 +1,21 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, Zap, Clock, DollarSign, Code2, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Zap,
+  Clock,
+  DollarSign,
+  Code2,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 
 const stats = [
-  { value: "30s", label: "Generation Time", icon: Clock },
-  { value: "99.7%", label: "Cost Savings", icon: DollarSign },
-  { value: "95%", label: "Production-Ready", icon: Code2 },
-  { value: "50-65", label: "Files Generated", icon: Sparkles },
+  { value: "1-3 min", label: "Generation Time", icon: Clock },
+  { value: "90.7%", label: "Cost Savings", icon: DollarSign },
+  { value: "75%", label: "Production-Ready", icon: Code2 },
+  { value: "50-80", label: "Files Generated", icon: Sparkles },
 ];
 
 const Home = () => {
@@ -20,7 +27,10 @@ const Home = () => {
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-glow opacity-50" />
         <div className="absolute top-20 right-20 w-72 h-72 bg-glow/10 rounded-full blur-3xl animate-pulse-glow" />
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-glow-secondary/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "1.5s" }} />
+        <div
+          className="absolute bottom-20 left-20 w-96 h-96 bg-glow-secondary/10 rounded-full blur-3xl animate-pulse-glow"
+          style={{ animationDelay: "1.5s" }}
+        />
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -43,8 +53,8 @@ const Home = () => {
               className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
             >
               From Business Requirements to{" "}
-              <span className="text-gradient">Production-Ready Code</span>{" "}
-              in Minutes
+              <span className="text-gradient">Domain Boilerplate Code</span> in
+              Minutes
             </motion.h1>
 
             <motion.p
@@ -53,9 +63,10 @@ const Home = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
             >
-              DomForgeAI transforms weeks of development into minutes. Generate complete 
-              microservices architecture packages including C4 diagrams, .NET Core 8 solutions, 
-              DBML schemas, and OpenAPI specifications.
+              DomForgeAI transforms weeks of development into minutes. Generate
+              complete microservices architecture packages including C4
+              diagrams, .NET Core 8 solutions, DBML schemas, and OpenAPI
+              specifications.
             </motion.p>
 
             <motion.div
@@ -99,7 +110,9 @@ const Home = () => {
                 <div className="text-3xl md:text-4xl font-bold text-gradient mb-1">
                   {stat.value}
                 </div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <div className="text-sm text-muted-foreground">
+                  {stat.label}
+                </div>
               </motion.div>
             ))}
           </motion.div>
@@ -121,8 +134,8 @@ const Home = () => {
               <span className="text-gradient">Boilerplate Code</span>
             </h2>
             <p className="text-lg text-muted-foreground">
-              70-80% of microservice code is repetitive. Let AI handle the mundane 
-              while you focus on solving complex business problems.
+              70-80% of microservice code is repetitive. Let AI handle the
+              mundane while you focus on solving complex business problems.
             </p>
           </motion.div>
 
@@ -135,7 +148,9 @@ const Home = () => {
               transition={{ duration: 0.6 }}
               className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8"
             >
-              <h3 className="text-xl font-semibold mb-4 text-destructive">Traditional Development</h3>
+              <h3 className="text-xl font-semibold mb-4 text-destructive">
+                Traditional Development
+              </h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3 text-muted-foreground">
                   <span className="text-destructive mt-1">✗</span>
@@ -164,7 +179,9 @@ const Home = () => {
               transition={{ duration: 0.6 }}
               className="rounded-2xl border border-primary/30 bg-primary/5 p-8"
             >
-              <h3 className="text-xl font-semibold mb-4 text-primary">With DomForgeAI</h3>
+              <h3 className="text-xl font-semibold mb-4 text-primary">
+                With DomForgeAI
+              </h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3 text-muted-foreground">
                   <span className="text-primary mt-1">✓</span>
@@ -203,7 +220,8 @@ const Home = () => {
               Ready to Transform Your Development?
             </h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join enterprises and startups who are already building faster with DomForgeAI.
+              Join enterprises and startups who are already building faster with
+              DomForgeAI.
             </p>
             <Link to="/auth">
               <Button variant="hero" size="xl">
