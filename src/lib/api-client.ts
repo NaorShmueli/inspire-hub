@@ -14,6 +14,8 @@ import type {
   CreditPackEntity,
   CreditPackRequest,
   UserSubscriptionEntity,
+  ContactSalesRequest,
+  FeedbackRequest,
 } from "./api-types";
 
 const API_BASE_URL = "http://localhost:5145/api";
@@ -263,6 +265,21 @@ class ApiClient {
       throw new Error("Failed to download project");
     }
     return response.blob();
+  }
+
+  // User Inputs endpoints
+  async submitContactSales(data: ContactSalesRequest): Promise<void> {
+    return this.request<void>("/UserInputs/contact-sales", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async submitFeedback(data: FeedbackRequest): Promise<void> {
+    return this.request<void>("/UserInputs/feedback", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   }
 }
 

@@ -8,6 +8,7 @@ import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import type { PlanEntity } from "@/lib/api-types";
+import { ContactSalesDialog } from "@/components/ContactSalesDialog";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ const Pricing = () => {
   const [selectedPlan, setSelectedPlan] = useState<PlanEntity | null>(null);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -61,8 +63,7 @@ const Pricing = () => {
 
   const handleSelectPlan = (plan: PlanEntity) => {
     if (plan.isContactSales) {
-      // Navigate to contact page for enterprise
-      navigate("/about");
+      setShowContactSalesDialog(true);
       return;
     }
 
@@ -316,11 +317,9 @@ const Pricing = () => {
             <p className="text-lg text-muted-foreground mb-8">
               Contact our team to discuss your specific needs and get a custom quote.
             </p>
-            <Link to="/about">
-              <Button variant="hero-outline" size="lg">
-                Contact Us
-              </Button>
-            </Link>
+            <Button variant="hero-outline" size="lg" onClick={() => setShowContactSalesDialog(true)}>
+              Contact Us
+            </Button>
           </motion.div>
         </div>
       </section>
@@ -380,6 +379,12 @@ const Pricing = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Contact Sales Dialog */}
+      <ContactSalesDialog 
+        open={showContactSalesDialog} 
+        onOpenChange={setShowContactSalesDialog} 
+      />
     </Layout>
   );
 };

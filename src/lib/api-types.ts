@@ -337,3 +337,22 @@ export interface ChatMessage {
     domainAnalysis?: DomainAnalysisResult;
   };
 }
+
+// User Input types
+export interface ContactSalesRequest {
+  userId: number | null;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  title: string;
+  content: string;
+}
+
+export interface FeedbackRequest {
+  userId: number;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  title: string;
+  content: string;
+}

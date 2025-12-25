@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -6,10 +7,10 @@ import {
   Users,
   ArrowRight,
   Mail,
-  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
+import { ContactSalesDialog } from "@/components/ContactSalesDialog";
 
 const values = [
   {
@@ -56,6 +57,8 @@ const useCases = [
 ];
 
 const About = () => {
+  const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
+
   return (
     <Layout>
       {/* Hero */}
@@ -214,9 +217,9 @@ const About = () => {
               team is here to help.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="hero" size="lg">
+              <Button variant="hero" size="lg" onClick={() => setShowContactSalesDialog(true)}>
                 <Mail className="w-5 h-5" />
-                Email Us
+                Contact Sales
               </Button>
             </div>
           </motion.div>
@@ -248,6 +251,12 @@ const About = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Contact Sales Dialog */}
+      <ContactSalesDialog 
+        open={showContactSalesDialog} 
+        onOpenChange={setShowContactSalesDialog} 
+      />
     </Layout>
   );
 };
