@@ -2,73 +2,150 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* DomForgeAI Design System - Dark Futuristic Tech Theme */
+/* DomForgeAI Design System - Professional Emerald Light Theme */
+/* Conveys: Trust, Growth, Stability, Enterprise Reliability */
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    /* Core Light Theme - Clean & Professional */
+    --background: 0 0% 99%;
+    --foreground: 160 10% 15%;
 
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 160 10% 15%;
 
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 10% 15%;
 
-    --primary: 189 94% 53%;
-    --primary-foreground: 222 47% 6%;
+    /* Emerald Primary - Trust & Growth */
+    --primary: 158 64% 35%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 47% 12%;
-    --secondary-foreground: 210 40% 98%;
+    /* Neutral Secondary */
+    --secondary: 160 10% 96%;
+    --secondary-foreground: 160 10% 25%;
 
-    --muted: 222 30% 15%;
-    --muted-foreground: 215 20% 55%;
+    /* Muted - Subtle backgrounds */
+    --muted: 160 10% 95%;
+    --muted-foreground: 160 10% 45%;
 
-    --accent: 189 94% 43%;
-    --accent-foreground: 222 47% 6%;
+    /* Accent - Lighter Emerald */
+    --accent: 158 55% 45%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    /* Functional colors */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 222 30% 18%;
-    --input: 222 30% 18%;
-    --ring: 189 94% 53%;
+    --success: 158 64% 40%;
+    --success-foreground: 0 0% 100%;
 
-    --radius: 0.75rem;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
-    /* Custom colors */
-    --glow: 189 94% 53%;
-    --glow-secondary: 262 83% 58%;
-    --surface: 222 47% 10%;
-    --surface-elevated: 222 47% 14%;
+    /* Borders & Inputs */
+    --border: 160 10% 88%;
+    --input: 160 10% 88%;
+    --ring: 158 64% 35%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(189 94% 53%) 0%, hsl(262 83% 58%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(222 47% 10%) 0%, hsl(222 47% 6%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(189 94% 53% / 0.15) 0%, transparent 70%);
-    --gradient-hero: linear-gradient(135deg, hsl(222 47% 8%) 0%, hsl(222 47% 6%) 50%, hsl(262 40% 8%) 100%);
+    --radius: 0.625rem;
 
-    /* Shadows */
-    --shadow-glow: 0 0 60px hsl(189 94% 53% / 0.3);
-    --shadow-glow-sm: 0 0 30px hsl(189 94% 53% / 0.2);
-    --shadow-card: 0 4px 24px hsl(222 47% 4% / 0.5);
+    /* Custom Professional Colors */
+    --emerald-50: 152 81% 96%;
+    --emerald-100: 149 80% 90%;
+    --emerald-200: 152 76% 80%;
+    --emerald-300: 156 72% 67%;
+    --emerald-400: 158 64% 52%;
+    --emerald-500: 158 64% 42%;
+    --emerald-600: 158 64% 35%;
+    --emerald-700: 161 64% 28%;
+    --emerald-800: 163 64% 23%;
+    --emerald-900: 164 69% 19%;
 
-    /* Sidebar (keeping defaults) */
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 189 94% 53%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 47% 14%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 30% 18%;
-    --sidebar-ring: 189 94% 53%;
+    /* Surface layers */
+    --surface: 160 10% 98%;
+    --surface-elevated: 0 0% 100%;
+    --surface-overlay: 160 10% 97%;
+
+    /* Subtle Gradients - Professional & Refined */
+    --gradient-primary: linear-gradient(135deg, hsl(158 64% 35%) 0%, hsl(158 55% 45%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(160 10% 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 99%) 0%, hsl(160 20% 97%) 50%, hsl(158 30% 96%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(160 10% 99%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(158 64% 38%) 0%, hsl(152 50% 45%) 100%);
+
+    /* Shadows - Subtle & Professional */
+    --shadow-sm: 0 1px 2px hsl(160 10% 15% / 0.04);
+    --shadow-md: 0 4px 12px hsl(160 10% 15% / 0.06);
+    --shadow-lg: 0 8px 24px hsl(160 10% 15% / 0.08);
+    --shadow-xl: 0 16px 48px hsl(160 10% 15% / 0.1);
+    --shadow-card: 0 2px 8px hsl(160 10% 15% / 0.05), 0 1px 2px hsl(160 10% 15% / 0.03);
+    --shadow-primary: 0 4px 16px hsl(158 64% 35% / 0.2);
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 160 10% 25%;
+    --sidebar-primary: 158 64% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 158 30% 95%;
+    --sidebar-accent-foreground: 158 64% 30%;
+    --sidebar-border: 160 10% 90%;
+    --sidebar-ring: 158 64% 35%;
   }
 
+  /* Dark mode support for future toggle */
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --background: 160 15% 8%;
+    --foreground: 160 10% 95%;
+
+    --card: 160 15% 10%;
+    --card-foreground: 160 10% 95%;
+
+    --popover: 160 15% 10%;
+    --popover-foreground: 160 10% 95%;
+
+    --primary: 158 64% 45%;
+    --primary-foreground: 160 15% 8%;
+
+    --secondary: 160 15% 15%;
+    --secondary-foreground: 160 10% 90%;
+
+    --muted: 160 15% 18%;
+    --muted-foreground: 160 10% 55%;
+
+    --accent: 158 55% 40%;
+    --accent-foreground: 160 15% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 160 15% 20%;
+    --input: 160 15% 20%;
+    --ring: 158 64% 45%;
+
+    --surface: 160 15% 12%;
+    --surface-elevated: 160 15% 14%;
+    --surface-overlay: 160 15% 16%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(158 64% 40%) 0%, hsl(158 55% 50%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(160 15% 12%) 0%, hsl(160 15% 8%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(160 15% 8%) 0%, hsl(160 20% 10%) 50%, hsl(158 25% 12%) 100%);
+
+    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.2);
+    --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.3);
+    --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.4);
+    --shadow-primary: 0 4px 16px hsl(158 64% 45% / 0.3);
+
+    --sidebar-background: 160 15% 10%;
+    --sidebar-foreground: 160 10% 90%;
+    --sidebar-primary: 158 64% 45%;
+    --sidebar-primary-foreground: 160 15% 8%;
+    --sidebar-accent: 160 15% 15%;
+    --sidebar-accent-foreground: 158 55% 60%;
+    --sidebar-border: 160 15% 20%;
+    --sidebar-ring: 158 64% 45%;
   }
 }
 
@@ -83,11 +160,12 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
+    @apply font-semibold tracking-tight;
   }
 
   code, pre {
@@ -96,11 +174,18 @@
 }
 
 @layer utilities {
+  /* Text Gradients */
   .text-gradient {
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-primary);
   }
 
+  .text-gradient-accent {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-accent);
+  }
+
+  /* Background Gradients */
   .bg-gradient-primary {
     background-image: var(--gradient-primary);
   }
@@ -109,37 +194,119 @@
     background-image: var(--gradient-hero);
   }
 
-  .bg-gradient-glow {
-    background-image: var(--gradient-glow);
+  .bg-gradient-subtle {
+    background-image: var(--gradient-subtle);
   }
 
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
+  .bg-gradient-card {
+    background-image: var(--gradient-card);
   }
 
-  .shadow-glow-sm {
-    box-shadow: var(--shadow-glow-sm);
+  .bg-gradient-accent {
+    background-image: var(--gradient-accent);
   }
 
+  /* Shadows */
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-primary {
+    box-shadow: var(--shadow-primary);
+  }
+
+  /* Glass Effect - Subtle for light theme */
   .glass {
-    @apply bg-surface/50 backdrop-blur-xl border border-border/50;
+    @apply bg-white/70 backdrop-blur-lg border border-border/50;
   }
 
+  .glass-subtle {
+    @apply bg-white/50 backdrop-blur-md;
+  }
+
+  /* Professional Card Styles */
+  .card-professional {
+    @apply bg-card border border-border/60 rounded-lg;
+    box-shadow: var(--shadow-card);
+  }
+
+  .card-elevated {
+    @apply bg-card border border-border/40 rounded-xl;
+    box-shadow: var(--shadow-md);
+  }
+
+  .card-interactive {
+    @apply bg-card border border-border/60 rounded-lg transition-all duration-200;
+    box-shadow: var(--shadow-card);
+  }
+
+  .card-interactive:hover {
+    @apply border-primary/30;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  /* Emerald accent utilities */
+  .emerald-glow {
+    box-shadow: 0 0 20px hsl(158 64% 35% / 0.15);
+  }
+
+  .emerald-glow-lg {
+    box-shadow: 0 0 40px hsl(158 64% 35% / 0.2);
+  }
+
+  /* Animations */
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
 
-  .animate-pulse-glow {
-    animation: pulse-glow 3s ease-in-out infinite;
+  .animate-fade-up {
+    animation: fade-up 0.5s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.3s ease-out forwards;
   }
 
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
+    50% { transform: translateY(-12px); }
   }
 
-  @keyframes pulse-glow {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
+  @keyframes fade-up {
+    from { 
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Focus states - Professional emerald ring */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  /* Divider styles */
+  .divider-subtle {
+    @apply border-t border-border/50;
+  }
+
+  /* Link hover effect */
+  .link-hover {
+    @apply transition-colors duration-200 hover:text-primary;
   }
 }
