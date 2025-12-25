@@ -114,13 +114,29 @@ export const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 text-foreground"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile Actions */}
+          <div className="md:hidden flex items-center gap-2">
+            {isAuthenticated && (
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Open feedback dialog"
+                onClick={() => setShowFeedbackDialog(true)}
+              >
+                <MessageSquare />
+                <span className="sr-only">Feedback</span>
+              </Button>
+            )}
+
+            {/* Mobile Menu Button */}
+            <button
+              className="p-2 text-foreground"
+              onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+            >
+              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
