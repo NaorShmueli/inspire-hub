@@ -210,7 +210,7 @@ const MyPlan = () => {
                   <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Status</span>
-                      <span className={`font-medium ${userSubscription.status === 'active' ? 'text-green-500' : 'text-yellow-500'}`}>
+                      <span className={`font-medium ${userSubscription.status?.toLowerCase() === 'active' ? 'text-green-500' : 'text-yellow-500'}`}>
                         {userSubscription.status}
                       </span>
                     </div>
@@ -246,7 +246,7 @@ const MyPlan = () => {
                   <Button variant="outline" onClick={() => navigate("/pricing")}>
                     Upgrade Plan
                   </Button>
-                  {userSubscription && userSubscription.status === 'active' && !currentPlan.isContactSales && (
+                  {userSubscription && userSubscription.status?.toLowerCase() === 'active' && !currentPlan.isContactSales && (
                     <Button
                       variant="ghost"
                       className="text-destructive hover:text-destructive"
