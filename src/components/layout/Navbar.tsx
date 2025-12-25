@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Zap, Coins, LogOut, User } from "lucide-react";
+import { Menu, X, Zap, Coins, LogOut, User, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -19,6 +20,7 @@ export const Navbar = () => {
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
 
   useEffect(() => {
     const fetchCredits = async () => {
@@ -93,6 +95,12 @@ export const Navbar = () => {
                   </Button>
                 </Link>
 
+                {/* Feedback Button */}
+                <Button variant="outline" size="sm" onClick={() => setShowFeedbackDialog(true)}>
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Feedback
+                </Button>
+
                 <Button variant="ghost" size="sm" onClick={logout}>
                   <LogOut className="w-4 h-4" />
                 </Button>
@@ -160,6 +168,15 @@ export const Navbar = () => {
                       Dashboard
                     </Button>
                   </Link>
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full"
+                    onClick={() => { setShowFeedbackDialog(true); setIsOpen(false); }}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Feedback
+                  </Button>
                   <Button variant="ghost" size="lg" className="w-full" onClick={() => { logout(); setIsOpen(false); }}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Logout
@@ -176,6 +193,9 @@ export const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog} />
     </nav>
   );
 };
