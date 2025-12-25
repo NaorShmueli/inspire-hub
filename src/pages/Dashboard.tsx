@@ -19,6 +19,7 @@ import {
   Layers,
   Database,
   FileCode,
+  MessageSquare,
 } from "lucide-react";
 import {
   Tooltip,
@@ -46,6 +47,7 @@ import {
 } from "@/lib/foundation-question-cache";
 import { toast } from "@/hooks/use-toast";
 import type { ConversationSession } from "@/lib/api-types";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -63,6 +65,7 @@ const Dashboard = () => {
     ConversationSession[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
 
   // Fetch sessions on mount and tab change
   useEffect(() => {
@@ -457,6 +460,14 @@ const Dashboard = () => {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setShowFeedbackDialog(true)}
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Feedback
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => navigate("/my-plan")}
             >
               <CreditCard className="w-4 h-4 mr-2" />
@@ -735,6 +746,11 @@ const Dashboard = () => {
           </Tabs>
         </motion.div>
       </main>
+
+      <FeedbackDialog
+        open={showFeedbackDialog}
+        onOpenChange={setShowFeedbackDialog}
+      />
     </div>
   );
 };
