@@ -167,8 +167,17 @@ const Dashboard = () => {
       const metadata = await apiClient.getSessionMetadata(sessionId);
       const session = metadata.session;
       const currentPhase = session.currentPhase;
-      const confidenceScore = session.confidenceScore ?? 0;
+      const rawConfidence = session.confidenceScore ?? 0;
+      const confidencePercent = rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence;
       const rawRounds = (metadata as any).rounds || [];
+
+      console.log("[Dashboard][Continue] metadata", {
+        sessionId,
+        currentPhase,
+        rawConfidence,
+        confidencePercent,
+        rounds: Array.isArray(rawRounds) ? rawRounds.length : 0,
+      });
 
       // If generating_packages, go to status page
       if (currentPhase === "generating_packages") {
@@ -221,8 +230,38 @@ const Dashboard = () => {
         return;
       }
 
-      // If confidenceScore < 85, continue rounds
-      if (confidenceScore < 85) {
+      // If confidence >= 85%, stop and show domain approval UI
+      if (confidencePercent > 84) {
+        const lastRound =
+          normalizedRounds.length > 0
+            ? normalizedRounds[normalizedRounds.length - 1]
+            : null;
+        const lastAnalysis = lastRound?.aiAnalysisJson
+          ? JSON.parse(lastRound.aiAnalysisJson)
+          : null;
+
+        console.log("[Dashboard][Continue] show domain approval", {
+          sessionId,
+          confidencePercent,
+          rounds: normalizedRounds.length,
+          hasLastAnalysis: Boolean(lastAnalysis),
+        });
+
+        navigate(`/project/${sessionId}/questionnaire`, {
+          state: {
+            session,
+            resumeData: {
+              rounds: normalizedRounds,
+              showDomainApproval: true,
+              lastAnalysis,
+            },
+          },
+        });
+        return;
+      }
+
+      // If confidence < 85, continue rounds
+      if (confidencePercent < 85) {
         const nextRoundNumber = normalizedRounds.length + 1;
 
         // Find the first incomplete round (aiAnalysisJson null OR empty string)
