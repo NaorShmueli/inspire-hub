@@ -219,11 +219,53 @@ const Questionnaire = () => {
   // Handle resume from Dashboard
   useEffect(() => {
     const resumeData = location.state?.resumeData as ResumeData | undefined;
+
+    // Normalize confidence to percent for display/threshold checks
+    const sessionRawConfidence =
+      (location.state?.session as ConversationSession | undefined)?.confidenceScore ??
+      session?.confidenceScore ??
+      0;
+    const sessionConfidencePercent =
+      sessionRawConfidence <= 1 ? sessionRawConfidence * 100 : sessionRawConfidence;
+
+    console.log("[Questionnaire][Mount]", {
+      sessionId,
+      hasResumeData: Boolean(resumeData),
+      sessionRawConfidence,
+      sessionConfidencePercent,
+    });
+
     if (resumeData && !isResuming) {
       setIsResuming(true);
       initializeFromResumeData(resumeData);
+      return;
     }
-  }, [location.state?.resumeData]);
+
+    // If we navigated here without resumeData but confidence >= 85%, show domain approval immediately
+    if (!resumeData && !isResuming && sessionConfidencePercent > 84) {
+      console.log(
+        "[Questionnaire] No resumeData + confidence >= 85% -> show domain approval",
+        { sessionConfidencePercent }
+      );
+      setIsResuming(true);
+      setConfidenceScore(sessionConfidencePercent);
+      setShowDomainApproval(true);
+      setIsFoundationPhase(false);
+      setMessages((prev) =>
+        prev.length > 0
+          ? prev
+          : [
+              {
+                id: "welcome",
+                type: "system",
+                content:
+                  "Welcome back! Confidence threshold reached — please approve to generate packages.",
+                timestamp: new Date(),
+              },
+            ]
+      );
+    }
+  }, [location.state?.resumeData, location.state?.session, sessionId]);
 
   const initializeFromResumeData = (resumeData: ResumeData) => {
     const chatMessages: ChatMessage[] = [];
@@ -403,11 +445,21 @@ const Questionnaire = () => {
     });
 
     // Check if we should show domain approval (explicit flag OR confidence > 84%)
-    const lastRoundConfidence = resumeData.lastAnalysis?.round_metadata?.confidence_score_after_expected || 0;
-    // session.confidenceScore is already a decimal (e.g., 0.85), not a percentage
-    const sessionConfidence = session?.confidenceScore || 0;
+    const toRatio = (v: number) => (v > 1 ? v / 100 : v);
+    const lastRoundConfidence = toRatio(
+      resumeData.lastAnalysis?.round_metadata?.confidence_score_after_expected || 0
+    );
+    const sessionConfidence = toRatio(session?.confidenceScore || 0);
     const effectiveConfidence = Math.max(lastRoundConfidence, sessionConfidence);
-    
+
+    console.log("[Questionnaire][Resume] domain-approval check", {
+      showDomainApprovalFlag: Boolean(resumeData.showDomainApproval),
+      lastRoundConfidence,
+      sessionConfidence,
+      effectiveConfidence,
+      rounds: resumeData.rounds.length,
+    });
+
     if (resumeData.showDomainApproval || effectiveConfidence > 0.84) {
       if (resumeData.lastAnalysis) {
         setRoundAnalysis(resumeData.lastAnalysis);
@@ -955,7 +1007,7 @@ const Questionnaire = () => {
           </AnimatePresence>
 
           {/* Domain Approval UI */}
-          {showDomainApproval && roundAnalysis && (
+          {showDomainApproval && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -974,7 +1026,7 @@ const Questionnaire = () => {
               </div>
 
               {/* Domain summary */}
-              {roundAnalysis.updated_domains &&
+              {roundAnalysis?.updated_domains &&
                 roundAnalysis.updated_domains.length > 0 && (
                   <div className="mb-4 space-y-2">
                     <p className="text-sm font-medium">Identified Domains:</p>
@@ -996,7 +1048,7 @@ const Questionnaire = () => {
                 )}
 
               {/* Risks warning */}
-              {roundAnalysis.refined_domain_analysis?.identified_risks &&
+              {roundAnalysis?.refined_domain_analysis?.identified_risks &&
                 roundAnalysis.refined_domain_analysis.identified_risks.length >
                   0 && (
                   <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
