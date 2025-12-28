@@ -165,7 +165,16 @@ const Dashboard = () => {
     e.stopPropagation();
     try {
       const metadata = await apiClient.getSessionMetadata(sessionId);
+      const session = metadata.session;
+      const currentPhase = session.currentPhase;
+      const confidenceScore = session.confidenceScore ?? 0;
       const rawRounds = (metadata as any).rounds || [];
+
+      // If generating_packages, go to status page
+      if (currentPhase === "generating_packages") {
+        navigate(`/project/${sessionId}/status`);
+        return;
+      }
 
       // Normalize round fields (backend may return different casing)
       const normalizedRounds = rawRounds
@@ -189,33 +198,81 @@ const Dashboard = () => {
         })
         .sort((a: any, b: any) => a.roundNumber - b.roundNumber);
 
-      // Find the first incomplete round (aiAnalysisJson null OR empty string)
-      const incompleteRound = normalizedRounds.find(
-        (r: any) =>
-          r.aiAnalysisJson === null ||
-          r.aiAnalysisJson === "" ||
-          r.aiAnalysisJson === "null"
-      );
-
-      if (incompleteRound) {
-        const questionsAnswers = incompleteRound.questionsAnswersJson
-          ? JSON.parse(incompleteRound.questionsAnswersJson)
-          : {};
-
-        // If AiAnalysisJson is null, QuestionsAnswersJson should contain keys with empty values.
-        const hasEmptyAnswers = Object.values(questionsAnswers).every(
-          (val) => val === "" || val === null
-        );
+      // If failed, show domain approval UI with chat history
+      if (currentPhase === "failed") {
+        const lastRound = normalizedRounds.length > 0 
+          ? normalizedRounds[normalizedRounds.length - 1] 
+          : null;
+        const lastAnalysis = lastRound?.aiAnalysisJson
+          ? JSON.parse(lastRound.aiAnalysisJson)
+          : null;
 
         navigate(`/project/${sessionId}/questionnaire`, {
           state: {
-            session: metadata.session,
+            session: session,
             resumeData: {
               rounds: normalizedRounds,
-              currentRound: incompleteRound,
-              questionsAnswers,
-              hasEmptyAnswers,
-              roundNumber: incompleteRound.roundNumber,
+              showDomainApproval: true,
+              lastAnalysis: lastAnalysis,
+              failed: true,
+            },
+          },
+        });
+        return;
+      }
+
+      // If confidenceScore < 85, continue rounds
+      if (confidenceScore < 85) {
+        const nextRoundNumber = normalizedRounds.length + 1;
+
+        // Find the first incomplete round (aiAnalysisJson null OR empty string)
+        const incompleteRound = normalizedRounds.find(
+          (r: any) =>
+            r.aiAnalysisJson === null ||
+            r.aiAnalysisJson === "" ||
+            r.aiAnalysisJson === "null"
+        );
+
+        if (incompleteRound) {
+          const questionsAnswers = incompleteRound.questionsAnswersJson
+            ? JSON.parse(incompleteRound.questionsAnswersJson)
+            : {};
+
+          const hasEmptyAnswers = Object.values(questionsAnswers).every(
+            (val) => val === "" || val === null
+          );
+
+          navigate(`/project/${sessionId}/questionnaire`, {
+            state: {
+              session: session,
+              resumeData: {
+                rounds: normalizedRounds,
+                currentRound: incompleteRound,
+                questionsAnswers,
+                hasEmptyAnswers,
+                roundNumber: incompleteRound.roundNumber,
+              },
+            },
+          });
+          return;
+        }
+
+        // No incomplete round found, start new round
+        const lastRound = normalizedRounds.length > 0 
+          ? normalizedRounds[normalizedRounds.length - 1] 
+          : null;
+        const lastAnalysis = lastRound?.aiAnalysisJson
+          ? JSON.parse(lastRound.aiAnalysisJson)
+          : null;
+
+        navigate(`/project/${sessionId}/questionnaire`, {
+          state: {
+            session: session,
+            resumeData: {
+              rounds: normalizedRounds,
+              roundNumber: nextRoundNumber,
+              lastAnalysis: lastAnalysis,
+              continueRounds: true,
             },
           },
         });
@@ -229,7 +286,7 @@ const Dashboard = () => {
         if (cachedQuestions && cachedQuestions.length > 0) {
           navigate(`/project/${sessionId}/questionnaire`, {
             state: {
-              session: metadata.session,
+              session: session,
               questions: cachedQuestions,
             },
           });
@@ -237,7 +294,6 @@ const Dashboard = () => {
         }
 
         // Fallback: start a new session (backend doesn't support restarting by sessionId)
-        const session = metadata.session;
         const safeProjectName =
           (session.projectName ?? "").trim() || `Project ${sessionId}`;
 
@@ -267,7 +323,7 @@ const Dashboard = () => {
         return;
       }
 
-      // If nothing is incomplete, still resume questionnaire with history (instead of status)
+      // If nothing is incomplete and confidence >= 85, show domain approval
       const lastRound = normalizedRounds[normalizedRounds.length - 1];
       const analysis = lastRound.aiAnalysisJson
         ? (JSON.parse(lastRound.aiAnalysisJson) as any)
@@ -275,7 +331,7 @@ const Dashboard = () => {
 
       navigate(`/project/${sessionId}/questionnaire`, {
         state: {
-          session: metadata.session,
+          session: session,
           resumeData: {
             rounds: normalizedRounds,
             showDomainApproval: Boolean(
