@@ -206,6 +206,7 @@ const Questionnaire = () => {
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
+  const [currentRoundId, setCurrentRoundId] = useState<number | null>(null);
   const [roundAnalysis, setRoundAnalysis] = useState<RoundAnalysisModel | null>(
     null
   );
@@ -421,7 +422,13 @@ const Questionnaire = () => {
         (incompleteRound as any).round_number ??
         (incompleteRound as any).RoundNumber ??
         0;
+      const roundId =
+        (incompleteRound as any).roundId ??
+        (incompleteRound as any).round_id ??
+        (incompleteRound as any).RoundId ??
+        null;
       setCurrentRound(roundNumber);
+      setCurrentRoundId(roundId);
       setIsFoundationPhase(roundNumber === 0);
 
       // Build questions from questionsAnswers keys with proper text resolution
@@ -726,7 +733,7 @@ const Questionnaire = () => {
       const response = await apiClient.submitFollowupAnswers(
         Number(sessionId),
         currentRound,
-        { answers: allAnswers, roundeId: roundAnalysis?.roundId }
+        { answers: allAnswers, roundeId: roundAnalysis?.roundId ?? currentRoundId ?? undefined }
       );
 
       setRoundAnalysis(response);
@@ -762,6 +769,7 @@ const Questionnaire = () => {
       if (response.round_metadata.requires_another_round) {
         // Continue with more questions
         setCurrentRound(response.roundNumber);
+        setCurrentRoundId(response.roundId ?? null);
         setFollowupQuestions(response.questions || []);
         setFollowupIndex(0);
         setAnswers({});
