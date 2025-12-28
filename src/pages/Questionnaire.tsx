@@ -422,11 +422,15 @@ const Questionnaire = () => {
         (incompleteRound as any).round_number ??
         (incompleteRound as any).RoundNumber ??
         0;
-      const roundId =
+      const roundIdRaw =
         (incompleteRound as any).roundId ??
         (incompleteRound as any).round_id ??
         (incompleteRound as any).RoundId ??
+        (incompleteRound as any).roundID ??
+        (incompleteRound as any).RoundID ??
         null;
+      const roundIdNum = typeof roundIdRaw === "string" ? Number(roundIdRaw) : roundIdRaw;
+      const roundId = roundIdNum && roundIdNum > 0 ? roundIdNum : null;
       setCurrentRound(roundNumber);
       setCurrentRoundId(roundId);
       setIsFoundationPhase(roundNumber === 0);
@@ -730,10 +734,23 @@ const Questionnaire = () => {
     setMessages((prev) => [...prev, processingMessage]);
 
     try {
+      const roundeId = roundAnalysis?.roundId ?? currentRoundId ?? null;
+      const payload = {
+        answers: allAnswers,
+        ...(roundeId && roundeId > 0 ? { roundeId } : {}),
+      };
+
+      console.log("submitFollowupAnswers", {
+        sessionId,
+        currentRound,
+        roundeId,
+        payload,
+      });
+
       const response = await apiClient.submitFollowupAnswers(
         Number(sessionId),
         currentRound,
-        { answers: allAnswers, roundeId: roundAnalysis?.roundId ?? currentRoundId ?? undefined }
+        payload
       );
 
       setRoundAnalysis(response);
@@ -769,7 +786,7 @@ const Questionnaire = () => {
       if (response.round_metadata.requires_another_round) {
         // Continue with more questions
         setCurrentRound(response.roundNumber);
-        setCurrentRoundId(response.roundId ?? null);
+        setCurrentRoundId(response.roundId && response.roundId > 0 ? response.roundId : null);
         setFollowupQuestions(response.questions || []);
         setFollowupIndex(0);
         setAnswers({});
