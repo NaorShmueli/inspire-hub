@@ -216,6 +216,22 @@ const Questionnaire = () => {
   const [showDomainApproval, setShowDomainApproval] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
 
+  // Helper to fetch session metadata and check confidence score
+  const checkConfidenceFromMetadata = async (): Promise<{ shouldShowApproval: boolean; confidencePercent: number }> => {
+    try {
+      const metadata = await apiClient.getSessionMetadata(Number(sessionId));
+      const sessionConfidence = metadata.session?.confidenceScore || 0;
+      const confidencePercent = sessionConfidence * 100;
+      return {
+        shouldShowApproval: confidencePercent > 84,
+        confidencePercent,
+      };
+    } catch (error) {
+      console.error("Failed to fetch session metadata:", error);
+      return { shouldShowApproval: false, confidencePercent: 0 };
+    }
+  };
+
   // Handle resume from Dashboard
   useEffect(() => {
     const resumeData = location.state?.resumeData as ResumeData | undefined;
@@ -225,11 +241,14 @@ const Questionnaire = () => {
     }
   }, [location.state?.resumeData]);
 
-  const initializeFromResumeData = (resumeData: ResumeData) => {
+  const initializeFromResumeData = async (resumeData: ResumeData) => {
+    // Fetch latest session metadata to check confidence score
+    const { shouldShowApproval, confidencePercent } = await checkConfidenceFromMetadata();
+    
     const chatMessages: ChatMessage[] = [];
     
     // Get cached foundation questions to resolve Q1, Q2, etc. to actual question text
-    const cachedFoundationQuestions = getCachedFoundationQuestions(Number(sessionId));
+    const cachedFoundationQs = getCachedFoundationQuestions(Number(sessionId));
     
     // Helper to get question text from Q1, Q2 keys
     const getQuestionText = (key: string, roundNumber: number, previousAnalysis: RoundAnalysisModel | null): string => {
@@ -239,10 +258,10 @@ const Questionnaire = () => {
       }
       
       // For foundation round (round 0 or round that uses Q1, Q2 format)
-      if (key.match(/^Q\d+$/i) && cachedFoundationQuestions) {
+      if (key.match(/^Q\d+$/i) && cachedFoundationQs) {
         const qNum = parseInt(key.replace(/^Q/i, "")) - 1;
-        if (qNum >= 0 && qNum < cachedFoundationQuestions.length) {
-          return cachedFoundationQuestions[qNum].question || key;
+        if (qNum >= 0 && qNum < cachedFoundationQs.length) {
+          return cachedFoundationQs[qNum].question || key;
         }
       }
       
@@ -281,7 +300,7 @@ const Questionnaire = () => {
     let previousRoundAnalysis: RoundAnalysisModel | null = null;
 
     // Build history from all rounds
-    resumeData.rounds.forEach((round, roundIndex) => {
+    resumeData.rounds.forEach((round) => {
       const aiAnalysisJsonRaw =
         (round as any).aiAnalysisJson ??
         (round as any).ai_analysis_json ??
@@ -366,11 +385,11 @@ const Questionnaire = () => {
         });
 
         // Add the AI analysis summary after the Q&A with domain information
-        const confidencePercent = Math.round(
+        const roundConfidencePercent = Math.round(
           (analysis.round_metadata?.confidence_score_after_expected || 0) * 100
         );
         
-        let analysisContent = `Analysis complete. Confidence: ${confidencePercent}%`;
+        let analysisContent = `Analysis complete. Confidence: ${roundConfidencePercent}%`;
         
         // Add reasoning if available
         if (analysis.round_metadata?.reasoning) {
@@ -384,7 +403,7 @@ const Questionnaire = () => {
           timestamp: new Date(analyzedAt || createdAt || Date.now()),
           metadata: {
             roundNumber,
-            confidenceScore: confidencePercent,
+            confidenceScore: roundConfidencePercent,
             domains: analysis.updated_domains || [],
             analysis,
             domainAnalysis: analysis.last_analysis_data || undefined,
@@ -393,7 +412,7 @@ const Questionnaire = () => {
 
         // Update confidence from last analyzed round
         if (analysis.round_metadata) {
-          setConfidenceScore(confidencePercent);
+          setConfidenceScore(roundConfidencePercent);
         }
         setRoundAnalysis(analysis);
         
@@ -402,17 +421,12 @@ const Questionnaire = () => {
       }
     });
 
-    // Check if we should show domain approval (explicit flag OR confidence > 84%)
-    const lastRoundConfidence = resumeData.lastAnalysis?.round_metadata?.confidence_score_after_expected || 0;
-    // session.confidenceScore is already a decimal (e.g., 0.85), not a percentage
-    const sessionConfidence = session?.confidenceScore || 0;
-    const effectiveConfidence = Math.max(lastRoundConfidence, sessionConfidence);
-    
-    if (resumeData.showDomainApproval || effectiveConfidence > 0.84) {
+    // Check confidence from metadata API call - if > 84%, show domain approval
+    if (shouldShowApproval) {
       if (resumeData.lastAnalysis) {
         setRoundAnalysis(resumeData.lastAnalysis);
       }
-      setConfidenceScore(effectiveConfidence * 100);
+      setConfidenceScore(confidencePercent);
       setShowDomainApproval(true);
       setIsFoundationPhase(false);
       setMessages(chatMessages);
@@ -764,10 +778,16 @@ const Questionnaire = () => {
       };
       setMessages((prev) => [...prev, analysisMessage]);
 
-      const confidencePercent = response.round_metadata.confidence_score_after_expected * 100;
+      // Fetch metadata to check confidence score from session
+      const { shouldShowApproval, confidencePercent: metadataConfidence } = await checkConfidenceFromMetadata();
+      
+      // Update confidence from metadata
+      if (metadataConfidence > 0) {
+        setConfidenceScore(metadataConfidence);
+      }
 
-      // If confidence > 84%, show domain approval regardless of requires_another_round
-      if (confidencePercent > 84) {
+      // If confidence > 84% from metadata, show domain approval
+      if (shouldShowApproval) {
         setShowDomainApproval(true);
       } else if (response.round_metadata.requires_another_round) {
         // Continue with more questions
