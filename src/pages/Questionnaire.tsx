@@ -206,7 +206,6 @@ const Questionnaire = () => {
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
-  const [currentRoundId, setCurrentRoundId] = useState<number | null>(null);
   const [roundAnalysis, setRoundAnalysis] = useState<RoundAnalysisModel | null>(
     null
   );
@@ -422,17 +421,7 @@ const Questionnaire = () => {
         (incompleteRound as any).round_number ??
         (incompleteRound as any).RoundNumber ??
         0;
-      const roundIdRaw =
-        (incompleteRound as any).roundId ??
-        (incompleteRound as any).round_id ??
-        (incompleteRound as any).RoundId ??
-        (incompleteRound as any).roundID ??
-        (incompleteRound as any).RoundID ??
-        null;
-      const roundIdNum = typeof roundIdRaw === "string" ? Number(roundIdRaw) : roundIdRaw;
-      const roundId = roundIdNum && roundIdNum > 0 ? roundIdNum : null;
       setCurrentRound(roundNumber);
-      setCurrentRoundId(roundId);
       setIsFoundationPhase(roundNumber === 0);
 
       // Build questions from questionsAnswers keys with proper text resolution
@@ -734,23 +723,10 @@ const Questionnaire = () => {
     setMessages((prev) => [...prev, processingMessage]);
 
     try {
-      const roundeId = roundAnalysis?.roundId ?? currentRoundId ?? null;
-      const payload = {
-        answers: allAnswers,
-        ...(roundeId && roundeId > 0 ? { roundeId } : {}),
-      };
-
-      console.log("submitFollowupAnswers", {
-        sessionId,
-        currentRound,
-        roundeId,
-        payload,
-      });
-
       const response = await apiClient.submitFollowupAnswers(
         Number(sessionId),
         currentRound,
-        payload
+        { answers: allAnswers, roundeId: roundAnalysis?.roundId }
       );
 
       setRoundAnalysis(response);
@@ -786,7 +762,6 @@ const Questionnaire = () => {
       if (response.round_metadata.requires_another_round) {
         // Continue with more questions
         setCurrentRound(response.roundNumber);
-        setCurrentRoundId(response.roundId && response.roundId > 0 ? response.roundId : null);
         setFollowupQuestions(response.questions || []);
         setFollowupIndex(0);
         setAnswers({});

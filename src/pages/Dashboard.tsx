@@ -179,12 +179,6 @@ const Dashboard = () => {
       // Normalize round fields (backend may return different casing)
       const normalizedRounds = rawRounds
         .map((r: any) => {
-          const roundIdRaw =
-            r.roundId ?? r.round_id ?? r.RoundId ?? r.roundID ?? r.RoundID ?? null;
-          const roundIdNum =
-            typeof roundIdRaw === "string" ? Number(roundIdRaw) : roundIdRaw;
-          const roundId = roundIdNum && roundIdNum > 0 ? roundIdNum : null;
-
           const roundNumber =
             r.roundNumber ?? r.round_number ?? r.RoundNumber ?? 0;
           const aiAnalysisJson =
@@ -197,7 +191,6 @@ const Dashboard = () => {
 
           return {
             ...r,
-            roundId,
             roundNumber,
             aiAnalysisJson,
             questionsAnswersJson,
