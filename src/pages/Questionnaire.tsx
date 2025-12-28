@@ -402,12 +402,16 @@ const Questionnaire = () => {
       }
     });
 
-    // Check if we should show domain approval
-    if (resumeData.showDomainApproval && resumeData.lastAnalysis) {
-      setRoundAnalysis(resumeData.lastAnalysis);
-      setConfidenceScore(
-        (resumeData.lastAnalysis.round_metadata?.confidence_score_after_expected || 0) * 100
-      );
+    // Check if we should show domain approval (explicit flag OR confidence > 84%)
+    const lastRoundConfidence = resumeData.lastAnalysis?.round_metadata?.confidence_score_after_expected || 0;
+    const sessionConfidence = (session?.confidenceScore || 0) / 100; // session stores as percentage
+    const effectiveConfidence = Math.max(lastRoundConfidence, sessionConfidence);
+    
+    if (resumeData.showDomainApproval || effectiveConfidence > 0.84) {
+      if (resumeData.lastAnalysis) {
+        setRoundAnalysis(resumeData.lastAnalysis);
+      }
+      setConfidenceScore(effectiveConfidence * 100);
       setShowDomainApproval(true);
       setIsFoundationPhase(false);
       setMessages(chatMessages);
@@ -759,7 +763,12 @@ const Questionnaire = () => {
       };
       setMessages((prev) => [...prev, analysisMessage]);
 
-      if (response.round_metadata.requires_another_round) {
+      const confidencePercent = response.round_metadata.confidence_score_after_expected * 100;
+
+      // If confidence > 84%, show domain approval regardless of requires_another_round
+      if (confidencePercent > 84) {
+        setShowDomainApproval(true);
+      } else if (response.round_metadata.requires_another_round) {
         // Continue with more questions
         setCurrentRound(response.roundNumber);
         setFollowupQuestions(response.questions || []);
