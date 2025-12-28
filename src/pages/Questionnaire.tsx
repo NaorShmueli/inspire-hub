@@ -404,7 +404,8 @@ const Questionnaire = () => {
 
     // Check if we should show domain approval (explicit flag OR confidence > 84%)
     const lastRoundConfidence = resumeData.lastAnalysis?.round_metadata?.confidence_score_after_expected || 0;
-    const sessionConfidence = (session?.confidenceScore || 0) / 100; // session stores as percentage
+    // session.confidenceScore is already a decimal (e.g., 0.85), not a percentage
+    const sessionConfidence = session?.confidenceScore || 0;
     const effectiveConfidence = Math.max(lastRoundConfidence, sessionConfidence);
     
     if (resumeData.showDomainApproval || effectiveConfidence > 0.84) {
