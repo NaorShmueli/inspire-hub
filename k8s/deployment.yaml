@@ -1,22 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: domforgeai
+  name: dom-froge-ai-react-app
+  namespace: dom-froge-ai   
   labels:
-    app: domforgeai
+    app: dom-froge-ai-react-app
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: domforgeai
+      app: dom-froge-ai-react-app
   template:
     metadata:
       labels:
-        app: domforgeai
+        app: dom-froge-ai-react-app
     spec:
       containers:
-        - name: domforgeai
-          image: <YOUR_ECR_REPO>/domforgeai:latest
+        - name: dom-froge-ai-react-app
+          image: localhost:5000/dom-froge-ai-react-app:latest
           ports:
             - containerPort: 80
           resources:

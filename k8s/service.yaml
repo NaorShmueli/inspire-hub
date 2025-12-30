@@ -1,14 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: domforgeai-service
+  name: dom-froge-ai-react-app
+  namespace: dom-froge-ai   
   labels:
-    app: domforgeai
+    app: dom-froge-ai-react-app
 spec:
   type: ClusterIP
   selector:
-    app: domforgeai
+    app: dom-froge-ai-react-app
   ports:
     - protocol: TCP
-      port: 80
+      port: 8099
       targetPort: 80

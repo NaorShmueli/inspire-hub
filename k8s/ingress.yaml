@@ -1,29 +1,18 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: domforgeai-ingress
-  annotations:
-    # AWS ALB Ingress Controller annotations
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
-    # Add your ACM certificate ARN for HTTPS
-    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account:certificate/xxx
-    alb.ingress.kubernetes.io/healthcheck-path: /
-    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "30"
-    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
-    alb.ingress.kubernetes.io/success-codes: "200"
+  name: dom-froge-ai-react-app-ingress
+  namespace: dom-froge-ai   
 spec:
+  ingressClassName: nginx
   rules:
-    - host: domforgeai.yourdomain.com  # Replace with your domain
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: domforgeai-service
-                port:
-                  number: 80
+  - host: dom-froge-ai-react-app.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dom-froge-ai-react-app
+            port:
+              number: 8099

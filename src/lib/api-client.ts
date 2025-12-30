@@ -18,7 +18,7 @@ import type {
   FeedbackRequest,
 } from "./api-types";
 
-const API_BASE_URL = "http://localhost:5145/api";
+const API_BASE_URL = "http://dom-froge-ai-api.local.com/api";
 
 class ApiClient {
   private accessToken: string | null = null;
@@ -57,7 +57,9 @@ class ApiClient {
     };
 
     if (this.accessToken) {
-      (headers as Record<string, string>)["Authorization"] = `Bearer ${this.accessToken}`;
+      (headers as Record<string, string>)[
+        "Authorization"
+      ] = `Bearer ${this.accessToken}`;
     }
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -69,7 +71,9 @@ class ApiClient {
       // Try to refresh token
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
-        (headers as Record<string, string>)["Authorization"] = `Bearer ${this.accessToken}`;
+        (headers as Record<string, string>)[
+          "Authorization"
+        ] = `Bearer ${this.accessToken}`;
         const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
           ...options,
           headers,
@@ -83,7 +87,9 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || error.title || `API Error: ${response.status}`);
+      throw new Error(
+        error.detail || error.title || `API Error: ${response.status}`
+      );
     }
 
     // Handle 202 Accepted (may have content or no content)
@@ -197,7 +203,9 @@ class ApiClient {
 
   // Get sessions by status (completed or In analyze)
   async getSessionsByStatus(status: string): Promise<ConversationSession[]> {
-    return this.request<ConversationSession[]>(`/conversation/all/by/${status}`);
+    return this.request<ConversationSession[]>(
+      `/conversation/all/by/${status}`
+    );
   }
 
   // Get session metadata with rounds
@@ -222,15 +230,22 @@ class ApiClient {
   }
 
   async getCreditPacks(): Promise<StrategyResult<CreditPackEntity[]>> {
-    return this.request<StrategyResult<CreditPackEntity[]>>("/Plans/creditPacks");
+    return this.request<StrategyResult<CreditPackEntity[]>>(
+      "/Plans/creditPacks"
+    );
   }
 
   // Subscription endpoints
-  async subscribe(data: SubscribeRequest): Promise<{ sessionId: string; checkoutUrl: string }> {
-    return this.request<{ sessionId: string; checkoutUrl: string }>("/StripeSubscription/subscribe", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+  async subscribe(
+    data: SubscribeRequest
+  ): Promise<{ sessionId: string; checkoutUrl: string }> {
+    return this.request<{ sessionId: string; checkoutUrl: string }>(
+      "/StripeSubscription/subscribe",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
   }
 
   async cancelSubscription(userId: number): Promise<void> {
@@ -240,11 +255,16 @@ class ApiClient {
     });
   }
 
-  async buyCreditPack(data: CreditPackRequest): Promise<{ sessionId: string; checkoutUrl: string }> {
-    return this.request<{ sessionId: string; checkoutUrl: string }>("/StripeSubscription/buy/pack", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+  async buyCreditPack(
+    data: CreditPackRequest
+  ): Promise<{ sessionId: string; checkoutUrl: string }> {
+    return this.request<{ sessionId: string; checkoutUrl: string }>(
+      "/StripeSubscription/buy/pack",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
   }
 
   // Download endpoint
