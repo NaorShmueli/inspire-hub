@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
+import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
 
 const stats = [
   { value: "1-3 min", label: "Generation Time", icon: Clock },
@@ -202,6 +203,40 @@ const Home = () => {
               </ul>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Social Proof Section - Testimonials */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-subtle" />
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center max-w-3xl mx-auto mb-12"
+          >
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
+              Trusted by Engineering Teams
+            </span>
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">
+              Real Results from{" "}
+              <span className="text-gradient">Real Engineers</span>
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Join thousands of developers who are shipping faster with DomForgeAI
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <TestimonialsCarousel />
+          </motion.div>
         </div>
       </section>
 
