@@ -2,9 +2,16 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: dom-froge-ai-react-app-ingress
-  namespace: dom-froge-ai   
+  namespace: dom-froge-ai
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - dom-froge-ai-react-app.local
+    secretName: dom-froge-ai-react-tls
   rules:
   - host: dom-froge-ai-react-app.local
     http:

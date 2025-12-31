@@ -18,7 +18,7 @@ import type {
   FeedbackRequest,
 } from "./api-types";
 
-const API_BASE_URL = "http://dom-froge-ai-api.local.com/api";
+const API_BASE_URL = "https://dom-froge-ai-api.local.com/api";
 
 class ApiClient {
   private accessToken: string | null = null;
