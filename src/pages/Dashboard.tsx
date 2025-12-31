@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
-  Zap,
   Plus,
   FolderOpen,
   Clock,
@@ -48,6 +47,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import type { ConversationSession } from "@/lib/api-types";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
+import logo from "@/assets/logo.jpg";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -501,9 +501,7 @@ const Dashboard = () => {
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow-sm">
-              <Zap className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <img src={logo} alt="DomForgeAI" className="w-10 h-10 rounded-lg object-cover" />
             <span className="text-xl font-bold">
               Dom<span className="text-gradient">Forge</span>AI
             </span>
