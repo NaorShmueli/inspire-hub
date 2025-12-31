@@ -14,16 +14,13 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.jpg";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
@@ -121,7 +118,7 @@ const MyPlan = () => {
     }
   };
 
-  const handleCancelSubscription = async () => {
+  const handleConfirmCancel = async () => {
     if (!user) return;
 
     setIsCancelling(true);
@@ -137,11 +134,12 @@ const MyPlan = () => {
       console.error("Failed to cancel subscription:", error);
       toast({
         title: "Cancellation failed",
-        description: "Please try again",
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {
       setIsCancelling(false);
+      setCancelDialogOpen(false);
     }
   };
 
@@ -257,50 +255,14 @@ const MyPlan = () => {
                     Upgrade Plan
                   </Button>
                   {userSubscription && userSubscription.status?.toLowerCase() === 'active' && !currentPlan.isContactSales && (
-                    <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          disabled={isCancelling}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setCancelDialogOpen(true);
-                          }}
-                        >
-                          {isCancelling ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <AlertCircle className="w-4 h-4 mr-2" />
-                          )}
-                          Cancel Subscription
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Cancel Subscription</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your current billing period.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel type="button">Keep Subscription</AlertDialogCancel>
-                          <AlertDialogAction
-                            type="button"
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              await handleCancelSubscription();
-                              setCancelDialogOpen(false);
-                            }}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Yes, Cancel
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <Button
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setCancelDialogOpen(true)}
+                    >
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                      Cancel Subscription
+                    </Button>
                   )}
                 </div>
               </CardContent>
@@ -357,6 +319,62 @@ const MyPlan = () => {
           </div>
         </motion.div>
       </main>
+
+      {/* Cancel Subscription Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel Subscription</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel your subscription?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30">
+              <p className="text-sm text-muted-foreground">
+                You will lose access to premium features at the end of your current billing period.
+                Your credits will remain available until they expire.
+              </p>
+            </div>
+            
+            {currentPlan && (
+              <div className="p-4 rounded-lg bg-secondary/50">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">{currentPlan.name}</span>
+                  <span className="text-muted-foreground">
+                    ${currentPlan.priceMonthly}/mo
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+              disabled={isCancelling}
+            >
+              Keep Subscription
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmCancel}
+              disabled={isCancelling}
+            >
+              {isCancelling ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                "Yes, Cancel"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
