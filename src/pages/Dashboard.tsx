@@ -36,6 +36,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,6 +74,47 @@ const Dashboard = () => {
   >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [showInsufficientCreditsDialog, setShowInsufficientCreditsDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{
+    type: 'newProject' | 'download' | 'continue';
+    sessionId?: number;
+    event?: React.MouseEvent;
+  } | null>(null);
+  const [isCheckingCredits, setIsCheckingCredits] = useState(false);
+
+  const checkCreditsAndProceed = async (
+    actionType: 'newProject' | 'download' | 'continue',
+    sessionId?: number,
+    event?: React.MouseEvent
+  ) => {
+    setIsCheckingCredits(true);
+    try {
+      const creditData = await apiClient.getCreditBalance();
+      if (creditData.creditsBalance > 2) {
+        // Proceed with action
+        if (actionType === 'newProject') {
+          setShowNewProject(true);
+        } else if (actionType === 'download' && sessionId && event) {
+          await executeDownload(sessionId, event);
+        } else if (actionType === 'continue' && sessionId && event) {
+          await executeContinue(sessionId, event);
+        }
+      } else {
+        // Show insufficient credits dialog
+        setPendingAction({ type: actionType, sessionId, event });
+        setShowInsufficientCreditsDialog(true);
+      }
+    } catch (error) {
+      console.error("Failed to check credit balance:", error);
+      toast({
+        title: "Failed to check credits",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingCredits(false);
+    }
+  };
 
   // Fetch sessions on mount and tab change
   useEffect(() => {
@@ -137,6 +186,10 @@ const Dashboard = () => {
 
   const handleDownload = async (sessionId: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    await checkCreditsAndProceed('download', sessionId, e);
+  };
+
+  const executeDownload = async (sessionId: number, e: React.MouseEvent) => {
     try {
       const blob = await apiClient.downloadProject(sessionId);
       const url = URL.createObjectURL(blob);
@@ -163,6 +216,10 @@ const Dashboard = () => {
 
   const handleContinue = async (sessionId: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    await checkCreditsAndProceed('continue', sessionId, e);
+  };
+
+  const executeContinue = async (sessionId: number, e: React.MouseEvent) => {
     try {
       const metadata = await apiClient.getSessionMetadata(sessionId);
       const session = metadata.session;
@@ -557,10 +614,15 @@ const Dashboard = () => {
             <Button
               variant="hero"
               size="lg"
-              onClick={() => setShowNewProject(true)}
+              onClick={() => checkCreditsAndProceed('newProject')}
+              disabled={isCheckingCredits}
               className="shrink-0"
             >
-              <Plus className="w-5 h-5 mr-2" />
+              {isCheckingCredits ? (
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              ) : (
+                <Plus className="w-5 h-5 mr-2" />
+              )}
               New Project
             </Button>
           </div>
@@ -805,6 +867,52 @@ const Dashboard = () => {
         open={showFeedbackDialog}
         onOpenChange={setShowFeedbackDialog}
       />
+
+      {/* Insufficient Credits Dialog */}
+      <Dialog open={showInsufficientCreditsDialog} onOpenChange={setShowInsufficientCreditsDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-destructive" />
+              Insufficient Credits
+            </DialogTitle>
+            <DialogDescription>
+              You need more than 2 credits to perform this action.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30">
+              <p className="text-sm text-muted-foreground">
+                Your current credit balance is too low. Upgrade your subscription or purchase a credit pack to continue using DomForgeAI.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowInsufficientCreditsDialog(false);
+                setPendingAction(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="hero"
+              onClick={() => {
+                setShowInsufficientCreditsDialog(false);
+                setPendingAction(null);
+                navigate("/my-plan");
+              }}
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Go to My Plan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
