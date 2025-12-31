@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Zap, Coins, LogOut, User, MessageSquare } from "lucide-react";
+import { Menu, X, Coins, LogOut, User, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
+import logo from "@/assets/logo.jpg";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -44,9 +45,11 @@ export const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow-sm group-hover:shadow-glow transition-shadow duration-300">
-                <Zap className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <img 
+                src={logo} 
+                alt="DomForgeAI" 
+                className="w-8 h-8 rounded-lg shadow-glow-sm group-hover:shadow-glow transition-shadow duration-300"
+              />
             </div>
             <span className="text-xl font-bold text-foreground">
               Dom<span className="text-gradient">Forge</span>AI

@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Zap, ArrowLeft, Shield, Clock, Code2 } from "lucide-react";
+import { ArrowLeft, Shield, Clock, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo.jpg";
 
 const benefits = [
   { icon: Clock, text: "30-second generation time" },
@@ -34,9 +35,11 @@ const Auth = () => {
 
         <div className="relative z-10">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow-sm group-hover:shadow-glow transition-shadow duration-300">
-              <Zap className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <img 
+              src={logo} 
+              alt="DomForgeAI" 
+              className="w-10 h-10 rounded-lg shadow-glow-sm group-hover:shadow-glow transition-shadow duration-300"
+            />
             <span className="text-2xl font-bold text-foreground">
               Dom<span className="text-gradient">Forge</span>AI
             </span>
@@ -95,9 +98,11 @@ const Auth = () => {
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow-sm">
-                <Zap className="w-6 h-6 text-primary-foreground" />
-              </div>
+              <img 
+                src={logo} 
+                alt="DomForgeAI" 
+                className="w-10 h-10 rounded-lg shadow-glow-sm"
+              />
               <span className="text-2xl font-bold text-foreground">
                 Dom<span className="text-gradient">Forge</span>AI
               </span>

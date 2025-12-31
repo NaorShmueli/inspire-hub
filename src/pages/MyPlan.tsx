@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
-  Zap,
   CreditCard,
   Package,
   Crown,
@@ -12,6 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo.jpg";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
@@ -150,9 +150,7 @@ const MyPlan = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow-sm">
-              <Zap className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <img src={logo} alt="DomForgeAI" className="w-10 h-10 rounded-lg shadow-glow-sm" />
             <span className="text-xl font-bold">My Plan</span>
           </div>
         </div>
