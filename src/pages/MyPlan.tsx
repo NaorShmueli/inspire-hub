@@ -39,6 +39,7 @@ const MyPlan = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [buyingPackId, setBuyingPackId] = useState<number | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -256,12 +257,18 @@ const MyPlan = () => {
                     Upgrade Plan
                   </Button>
                   {userSubscription && userSubscription.status?.toLowerCase() === 'active' && !currentPlan.isContactSales && (
-                    <AlertDialog>
+                    <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
                       <AlertDialogTrigger asChild>
                         <Button
+                          type="button"
                           variant="ghost"
                           className="text-destructive hover:text-destructive"
                           disabled={isCancelling}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setCancelDialogOpen(true);
+                          }}
                         >
                           {isCancelling ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -279,9 +286,14 @@ const MyPlan = () => {
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                          <AlertDialogCancel type="button">Keep Subscription</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={handleCancelSubscription}
+                            type="button"
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              await handleCancelSubscription();
+                              setCancelDialogOpen(false);
+                            }}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
                             Yes, Cancel
