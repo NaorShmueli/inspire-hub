@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Github, Twitter, Linkedin } from "lucide-react";
+import { Twitter, Linkedin, MessageCircle } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 
 const footerLinks = {
@@ -38,8 +38,8 @@ export const Footer = () => {
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <Github className="w-5 h-5" />
+              <a href="https://discord.gg/yV5w8ZbT" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                <MessageCircle className="w-5 h-5" />
               </a>
               <a href="https://www.linkedin.com/company/domfrogeai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                 <Linkedin className="w-5 h-5" />
