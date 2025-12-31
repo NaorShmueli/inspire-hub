@@ -13,6 +13,17 @@ import {
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.jpg";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
@@ -245,19 +256,39 @@ const MyPlan = () => {
                     Upgrade Plan
                   </Button>
                   {userSubscription && userSubscription.status?.toLowerCase() === 'active' && !currentPlan.isContactSales && (
-                    <Button
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      onClick={handleCancelSubscription}
-                      disabled={isCancelling}
-                    >
-                      {isCancelling ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 mr-2" />
-                      )}
-                      Cancel Subscription
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          disabled={isCancelling}
+                        >
+                          {isCancelling ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                          )}
+                          Cancel Subscription
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel Subscription</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your current billing period.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleCancelSubscription}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Yes, Cancel
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   )}
                 </div>
               </CardContent>
