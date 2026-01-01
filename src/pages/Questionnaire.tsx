@@ -440,43 +440,74 @@ const Questionnaire = () => {
         (incompleteRound as any).round_number ??
         (incompleteRound as any).RoundNumber ??
         0;
+      const roundType =
+        (incompleteRound as any).roundType ??
+        (incompleteRound as any).round_type ??
+        (incompleteRound as any).RoundType ??
+        null;
+      
+      const isFoundation = roundNumber === 0 || roundType === "foundation";
       setCurrentRound(roundNumber);
-      setIsFoundationPhase(roundNumber === 0);
+      setIsFoundationPhase(isFoundation);
 
       // Build questions from questionsAnswers keys with proper text resolution
       const questionKeys = Object.keys(resumeData.questionsAnswers);
-      const questions: Question[] = questionKeys.map((key, i) => ({
-        question_id: i + 1,
-        question: getQuestionText(key, roundNumber, previousRoundAnalysis),
-        reason: null,
-        affects_domains: null,
-        priority: null,
-        expected_answer_type: null,
-        follow_up_if_answer: null,
-      }));
-
-      setFollowupQuestions(questions);
+      
+      if (isFoundation) {
+        // For foundation rounds, populate foundationQuestions
+        const foundationQs: FoundationQuestion[] = questionKeys.map((key, i) => ({
+          question_id: i + 1,
+          sectionId: 1,
+          questionOrder: i + 1,
+          question: key, // Keys are already the full question text
+          questionTypeId: 1,
+          questionTypeName: "text",
+          placeholder: null,
+          helpText: null,
+          createdAt: new Date().toISOString(),
+        }));
+        setFoundationQuestions(foundationQs);
+      } else {
+        // For follow-up rounds, populate followupQuestions
+        const questions: Question[] = questionKeys.map((key, i) => ({
+          question_id: i + 1,
+          question: getQuestionText(key, roundNumber, previousRoundAnalysis),
+          reason: null,
+          affects_domains: null,
+          priority: null,
+          expected_answer_type: null,
+          follow_up_if_answer: null,
+        }));
+        setFollowupQuestions(questions);
+      }
 
       // Add round header for incomplete round
       chatMessages.push({
         id: `round-${roundNumber}-header`,
         type: "system",
-        content: roundNumber === 0 ? "Resuming Foundation Questions" : `Resuming Round ${roundNumber}`,
+        content: isFoundation ? "Resuming Foundation Questions" : `Resuming Round ${roundNumber}`,
         timestamp: new Date(),
       });
 
       // If answers are empty, start from first question
       if (resumeData.hasEmptyAnswers) {
-        if (questions.length > 0) {
+        if (questionKeys.length > 0) {
+          const firstQuestionText = isFoundation 
+            ? questionKeys[0] 
+            : getQuestionText(questionKeys[0], roundNumber, previousRoundAnalysis);
           chatMessages.push({
-            id: `fq-${questions[0].question_id}`,
+            id: `fq-1`,
             type: "ai",
-            content: questions[0].question || "",
+            content: firstQuestionText,
             timestamp: new Date(),
-            metadata: { questionId: questions[0].question_id },
+            metadata: { questionId: 1 },
           });
         }
-        setFollowupIndex(0);
+        if (isFoundation) {
+          setCurrentQuestionIndex(0);
+        } else {
+          setFollowupIndex(0);
+        }
       } else {
         // Find first unanswered question
         const answeredCount = Object.values(resumeData.questionsAnswers).filter(
@@ -486,7 +517,7 @@ const Questionnaire = () => {
         // Show history of answered questions for incomplete round
         questionKeys.forEach((key, i) => {
           const answer = resumeData.questionsAnswers![key];
-          const questionText = getQuestionText(key, roundNumber, previousRoundAnalysis);
+          const questionText = isFoundation ? key : getQuestionText(key, roundNumber, previousRoundAnalysis);
           
           if (answer && answer !== "") {
             chatMessages.push({
@@ -504,26 +535,37 @@ const Questionnaire = () => {
           }
         });
 
-        // Set answers state
+        // Set answers state - use question text as key for foundation
         const existingAnswers: Record<string, string> = {};
         questionKeys.forEach((key, i) => {
           const answer = resumeData.questionsAnswers![key];
           if (answer && answer !== "") {
-            existingAnswers[`FQ${i + 1}`] = answer;
+            if (isFoundation) {
+              existingAnswers[key] = answer;
+            } else {
+              existingAnswers[`FQ${i + 1}`] = answer;
+            }
           }
         });
         setAnswers(existingAnswers);
 
         // Continue from next unanswered question
-        if (answeredCount < questions.length) {
+        if (answeredCount < questionKeys.length) {
+          const nextQuestionText = isFoundation 
+            ? questionKeys[answeredCount] 
+            : getQuestionText(questionKeys[answeredCount], roundNumber, previousRoundAnalysis);
           chatMessages.push({
             id: `fq-${answeredCount}-continue`,
             type: "ai",
-            content: questions[answeredCount].question || "",
+            content: nextQuestionText,
             timestamp: new Date(),
-            metadata: { questionId: questions[answeredCount].question_id },
+            metadata: { questionId: answeredCount + 1 },
           });
-          setFollowupIndex(answeredCount);
+          if (isFoundation) {
+            setCurrentQuestionIndex(answeredCount);
+          } else {
+            setFollowupIndex(answeredCount);
+          }
         }
       }
     }
