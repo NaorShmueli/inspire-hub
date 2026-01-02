@@ -41,7 +41,7 @@ const Pricing = () => {
       try {
         const result = await apiClient.getPlans();
         if (result.data && Array.isArray(result.data)) {
-          setPlans(result.data.filter(p => p.active));
+          setPlans(result.data.filter((p) => p.active));
         } else if (result.data) {
           // Handle single plan response
           setPlans([result.data as unknown as PlanEntity]);
@@ -102,7 +102,8 @@ const Pricing = () => {
       console.error("Subscription failed:", error);
       toast({
         title: "Subscription failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        description:
+          error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -122,7 +123,7 @@ const Pricing = () => {
       <section className="pt-24 pb-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-glow opacity-30" />
-        
+
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -131,13 +132,11 @@ const Pricing = () => {
             className="text-center max-w-3xl mx-auto"
           >
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              Simple,{" "}
-              <span className="text-gradient">Transparent</span>{" "}
-              Pricing
+              Simple, <span className="text-gradient">Transparent</span> Pricing
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground">
-              Save 99.7% compared to traditional development costs. 
-              Choose the plan that fits your needs.
+              Save 99.7% compared to traditional development costs. Choose the
+              plan that fits your needs.
             </p>
           </motion.div>
         </div>
@@ -152,16 +151,22 @@ const Pricing = () => {
             </div>
           ) : plans.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-muted-foreground">No plans available at the moment.</p>
+              <p className="text-muted-foreground">
+                No plans available at the moment.
+              </p>
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {plans.map((plan, index) => {
+              {plans.map((plan, index) => {
                 const Icon = getPlanIcon(plan.name);
-                const isPopular = plan.name?.toLowerCase() === 'professional' || plan.name?.toLowerCase() === 'pro';
-                const isFreePlan = plan.name?.toLowerCase() === 'free' || plan.priceMonthly === 0;
+                const isPopular =
+                  plan.name?.toLowerCase() === "professional" ||
+                  plan.name?.toLowerCase() === "pro";
+                const isFreePlan =
+                  plan.name?.toLowerCase() === "free" ||
+                  plan.priceMonthly === 0;
                 const showButton = !isFreePlan || !isAuthenticated;
-                
+
                 return (
                   <motion.div
                     key={plan.id}
@@ -186,20 +191,26 @@ const Pricing = () => {
                     </div>
 
                     <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                    <p className="text-muted-foreground mb-6">{plan.description}</p>
+                    <p className="text-muted-foreground mb-6">
+                      {plan.description}
+                    </p>
 
                     <div className="mb-8">
                       {plan.isContactSales ? (
                         <>
                           <span className="text-4xl font-bold">Custom</span>
-                          <span className="text-muted-foreground ml-2">/ contact us</span>
+                          <span className="text-muted-foreground ml-2">
+                            / contact us
+                          </span>
                         </>
                       ) : (
                         <>
                           <span className="text-4xl font-bold">
                             ${plan.priceMonthly}
                           </span>
-                          <span className="text-muted-foreground ml-2">/ month</span>
+                          <span className="text-muted-foreground ml-2">
+                            / month
+                          </span>
                         </>
                       )}
                     </div>
@@ -207,7 +218,10 @@ const Pricing = () => {
                     {/* Credits Info */}
                     <div className="mb-6 p-3 rounded-lg bg-secondary/50">
                       <p className="text-sm font-medium">
-                        {plan.creditsSummary || `${plan.domainCredits} domain credits, ${plan.microserviceCredits} microservice credits`}
+                        {plan.isContactSales
+                          ? "Custom domain credits, Custom microservice credits"
+                          : plan.creditsSummary ||
+                            `${plan.domainCredits} domain credits, ${plan.microserviceCredits} microservice credits`}
                       </p>
                     </div>
 
@@ -219,7 +233,9 @@ const Pricing = () => {
                           .map((highlight, i) => (
                             <li key={i} className="flex items-start gap-3">
                               <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                              <span className="text-muted-foreground">{highlight.text}</span>
+                              <span className="text-muted-foreground">
+                                {highlight.text}
+                              </span>
                             </li>
                           ))}
                       </ul>
@@ -254,8 +270,7 @@ const Pricing = () => {
             className="text-center max-w-3xl mx-auto mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              The True{" "}
-              <span className="text-gradient">Cost Comparison</span>
+              The True <span className="text-gradient">Cost Comparison</span>
             </h2>
             <p className="text-lg text-muted-foreground">
               See how DomForgeAI compares to traditional development costs.
@@ -273,22 +288,32 @@ const Pricing = () => {
               <div className="flex justify-between items-center p-4 rounded-xl bg-destructive/10 border border-destructive/30">
                 <div>
                   <h4 className="font-semibold">Traditional Development</h4>
-                  <p className="text-sm text-muted-foreground">Senior architect + development time</p>
+                  <p className="text-sm text-muted-foreground">
+                    Senior architect + development time
+                  </p>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-destructive">$35,000 - $80,000</div>
-                  <p className="text-sm text-muted-foreground">per microservice</p>
+                  <div className="text-2xl font-bold text-destructive">
+                    $35,000 - $80,000
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    per microservice
+                  </p>
                 </div>
               </div>
 
               <div className="flex justify-between items-center p-4 rounded-xl bg-primary/10 border border-primary/30">
                 <div>
                   <h4 className="font-semibold">With DomForgeAI</h4>
-                  <p className="text-sm text-muted-foreground">Automated generation + refinement</p>
+                  <p className="text-sm text-muted-foreground">
+                    Automated generation + refinement
+                  </p>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-primary">$197</div>
-                  <p className="text-sm text-muted-foreground">per microservice</p>
+                  <p className="text-sm text-muted-foreground">
+                    per microservice
+                  </p>
                 </div>
               </div>
 
@@ -315,9 +340,14 @@ const Pricing = () => {
               Questions? We're Here to Help
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Contact our team to discuss your specific needs and get a custom quote.
+              Contact our team to discuss your specific needs and get a custom
+              quote.
             </p>
-            <Button variant="hero-outline" size="lg" onClick={() => setShowContactSalesDialog(true)}>
+            <Button
+              variant="hero-outline"
+              size="lg"
+              onClick={() => setShowContactSalesDialog(true)}
+            >
               Contact Us
             </Button>
           </motion.div>
@@ -333,7 +363,7 @@ const Pricing = () => {
               You're about to subscribe to the {selectedPlan?.name} plan.
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedPlan && (
             <div className="py-4 space-y-4">
               <div className="p-4 rounded-lg bg-secondary/50">
@@ -344,12 +374,14 @@ const Pricing = () => {
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {selectedPlan.creditsSummary || `${selectedPlan.domainCredits} domain credits, ${selectedPlan.microserviceCredits} microservice credits`}
+                  {selectedPlan.creditsSummary ||
+                    `${selectedPlan.domainCredits} domain credits, ${selectedPlan.microserviceCredits} microservice credits`}
                 </p>
               </div>
-              
+
               <p className="text-sm text-muted-foreground">
-                You'll be redirected to Stripe to complete your payment securely.
+                You'll be redirected to Stripe to complete your payment
+                securely.
               </p>
             </div>
           )}
@@ -381,9 +413,9 @@ const Pricing = () => {
       </Dialog>
 
       {/* Contact Sales Dialog */}
-      <ContactSalesDialog 
-        open={showContactSalesDialog} 
-        onOpenChange={setShowContactSalesDialog} 
+      <ContactSalesDialog
+        open={showContactSalesDialog}
+        onOpenChange={setShowContactSalesDialog}
       />
     </Layout>
   );
