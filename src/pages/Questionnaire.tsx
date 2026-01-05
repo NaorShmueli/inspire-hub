@@ -217,18 +217,38 @@ const Questionnaire = () => {
   const [isResuming, setIsResuming] = useState(false);
 
   // Helper to fetch session metadata and check confidence score
-  const checkConfidenceFromMetadata = async (): Promise<{ shouldShowApproval: boolean; confidencePercent: number }> => {
+  const checkConfidenceFromMetadata = async (): Promise<{ shouldShowApproval: boolean; confidencePercent: number; fullAnalysis: RoundAnalysisModel | null }> => {
     try {
       const metadata = await apiClient.getSessionMetadata(Number(sessionId));
       const sessionConfidence = metadata.session?.confidenceScore || 0;
       const confidencePercent = sessionConfidence * 100;
+      
+      // Get the last round with AI analysis to extract full domain analysis
+      let fullAnalysis: RoundAnalysisModel | null = null;
+      if (metadata.rounds && metadata.rounds.length > 0) {
+        // Find the last round with AI analysis
+        for (let i = metadata.rounds.length - 1; i >= 0; i--) {
+          const round = metadata.rounds[i];
+          const aiAnalysisJson =
+            (round as any).aiAnalysisJson ??
+            (round as any).ai_analysis_json ??
+            (round as any).AiAnalysisJson ??
+            null;
+          if (aiAnalysisJson && aiAnalysisJson !== "" && aiAnalysisJson !== "null") {
+            fullAnalysis = parseAiAnalysisJson(aiAnalysisJson);
+            break;
+          }
+        }
+      }
+      
       return {
         shouldShowApproval: confidencePercent > 84,
         confidencePercent,
+        fullAnalysis,
       };
     } catch (error) {
       console.error("Failed to fetch session metadata:", error);
-      return { shouldShowApproval: false, confidencePercent: 0 };
+      return { shouldShowApproval: false, confidencePercent: 0, fullAnalysis: null };
     }
   };
 
@@ -820,16 +840,37 @@ const Questionnaire = () => {
       };
       setMessages((prev) => [...prev, analysisMessage]);
 
-      // Fetch metadata to check confidence score from session
-      const { shouldShowApproval, confidencePercent: metadataConfidence } = await checkConfidenceFromMetadata();
+      // Fetch metadata to check confidence score and get full analysis data
+      const { shouldShowApproval, confidencePercent: metadataConfidence, fullAnalysis } = await checkConfidenceFromMetadata();
       
       // Update confidence from metadata
       if (metadataConfidence > 0) {
         setConfidenceScore(metadataConfidence);
       }
 
-      // If confidence > 84% from metadata, show domain approval
+      // If confidence > 84% from metadata, show domain approval with full analysis data
       if (shouldShowApproval) {
+        // Update roundAnalysis with full data from metadata if available
+        if (fullAnalysis) {
+          setRoundAnalysis(fullAnalysis);
+          // Also update the last analysis message with full domain data
+          setMessages((prev) => {
+            const lastAnalysisIndex = prev.findIndex(m => m.id === `analysis-${response.roundNumber}`);
+            if (lastAnalysisIndex >= 0 && fullAnalysis.last_analysis_data) {
+              const updatedMessages = [...prev];
+              updatedMessages[lastAnalysisIndex] = {
+                ...updatedMessages[lastAnalysisIndex],
+                metadata: {
+                  ...updatedMessages[lastAnalysisIndex].metadata,
+                  domainAnalysis: fullAnalysis.last_analysis_data,
+                  analysis: fullAnalysis,
+                },
+              };
+              return updatedMessages;
+            }
+            return prev;
+          });
+        }
         setShowDomainApproval(true);
       } else if (response.round_metadata.requires_another_round) {
         // Continue with more questions
