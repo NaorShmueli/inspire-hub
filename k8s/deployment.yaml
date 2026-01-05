@@ -6,7 +6,7 @@ metadata:
   labels:
     app: dom-froge-ai-react-app
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: dom-froge-ai-react-app
@@ -18,6 +18,7 @@ spec:
       containers:
         - name: dom-froge-ai-react-app
           image: localhost:5000/dom-froge-ai-react-app:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           resources:
