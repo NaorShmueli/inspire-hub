@@ -19,6 +19,7 @@ import {
   Database,
   FileCode,
   MessageSquare,
+  Eye,
 } from "lucide-react";
 import {
   Tooltip,
@@ -46,6 +47,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api-client";
 import {
@@ -53,8 +55,9 @@ import {
   getCachedFoundationQuestions,
 } from "@/lib/foundation-question-cache";
 import { toast } from "@/hooks/use-toast";
-import type { ConversationSession } from "@/lib/api-types";
+import type { ConversationSession, RoundAnalysisModel, DomainAnalysisResult } from "@/lib/api-types";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
+import { DomainAnalysisPanel } from "@/components/DomainAnalysisPanel";
 import logo from "@/assets/logo.jpg";
 
 const Dashboard = () => {
@@ -81,6 +84,15 @@ const Dashboard = () => {
     event?: React.MouseEvent;
   } | null>(null);
   const [isCheckingCredits, setIsCheckingCredits] = useState(false);
+  
+  // Analysis dialog state
+  const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
+  const [analysisData, setAnalysisData] = useState<{
+    projectName: string;
+    analysis: RoundAnalysisModel | null;
+    domainAnalysis: DomainAnalysisResult | null;
+  } | null>(null);
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
   const checkCreditsAndProceed = async (
     actionType: 'newProject' | 'download' | 'continue',
@@ -437,6 +449,178 @@ const Dashboard = () => {
     }
   };
 
+  // Helper to parse DomainAnalysisResult from raw data
+  const parseDomainAnalysisResult = (data: any): DomainAnalysisResult | null => {
+    if (!data) return null;
+    
+    return {
+      analysis_summary: data.analysis_summary || data.analysisSummary || null,
+      identified_domains: (data.identified_domains || data.identifiedDomains || []).map((d: any) => ({
+        domain_name: d.domain_name || d.domainName || null,
+        description: d.description || null,
+        business_capability: d.business_capability || d.businessCapability || null,
+        estimated_entities: d.estimated_entities || d.estimatedEntities || 0,
+        probable_entities: d.probable_entities || d.probableEntities || null,
+        key_responsibilities: d.key_responsibilities || d.keyResponsibilities || null,
+        user_types_served: d.user_types_served || d.userTypesServed || null,
+        confidence: d.confidence || 0,
+      })),
+      domain_relationships: (data.domain_relationships || data.domainRelationships || []).map((r: any) => ({
+        from_domain: r.from_domain || r.fromDomain || null,
+        to_domain: r.to_domain || r.toDomain || null,
+        relationship_type: r.relationship_type || r.relationshipType || null,
+        interaction_pattern: r.interaction_pattern || r.interactionPattern || null,
+        description: r.description || null,
+        data_shared: r.data_shared || r.dataShared || null,
+        notes: r.notes || null,
+      })),
+      cross_cutting_concerns: (data.cross_cutting_concerns || data.crossCuttingConcerns || []).map((c: any) => ({
+        concern: c.concern || null,
+        affected_domains: c.affected_domains || c.affectedDomains || null,
+        recommendation: c.recommendation || null,
+        notes: c.notes || null,
+      })),
+      integration_points: (data.integration_points || data.integrationPoints || []).map((i: any) => ({
+        external_system: i.external_system || i.externalSystem || null,
+        integrating_domain: i.integrating_domain || i.integratingDomain || null,
+        integration_type: i.integration_type || i.integrationType || null,
+        purpose: i.purpose || null,
+        criticality: i.criticality || null,
+      })),
+      compliance_impacts: (data.compliance_impacts || data.complianceImpacts || []).map((c: any) => ({
+        regulation: c.regulation || null,
+        affected_domains: c.affected_domains || c.affectedDomains || null,
+        requirements: c.requirements || null,
+        architectural_impact: c.architectural_impact || c.architecturalImpact || null,
+      })),
+      scale_considerations: data.scale_considerations || data.scaleConsiderations || null,
+      potential_issues: (data.potential_issues || data.potentialIssues || []).map((p: any) => ({
+        issue: p.issue || null,
+        description: p.description || null,
+        recommendation: p.recommendation || null,
+        severity: p.severity || null,
+      })),
+      recommended_microservices_count: data.recommended_microservices_count || data.recommendedMicroservicesCount || null,
+    };
+  };
+
+  // Helper to check if an object looks like a DomainAnalysisResult
+  const isDomainAnalysisResult = (obj: any): boolean => {
+    if (!obj || typeof obj !== 'object') return false;
+    return (
+      (obj.analysis_summary || obj.analysisSummary) ||
+      (obj.identified_domains || obj.identifiedDomains) ||
+      (obj.recommended_microservices_count || obj.recommendedMicroservicesCount)
+    );
+  };
+
+  // Parse AI analysis JSON
+  const parseAiAnalysisJson = (jsonString: string): RoundAnalysisModel | null => {
+    try {
+      const parsed = JSON.parse(jsonString);
+      
+      if (isDomainAnalysisResult(parsed) && !parsed.round_metadata && !parsed.roundMetadata) {
+        return {
+          round_metadata: {
+            round_number: 0,
+            confidence_score_before: 0,
+            confidence_score_after_expected: parsed.analysis_summary?.confidence_score || parsed.analysisSummary?.confidenceScore || 0,
+            questions_count: 0,
+            requires_another_round: parsed.analysis_summary?.requires_followup ?? parsed.analysisSummary?.requiresFollowup ?? false,
+            reasoning: parsed.analysis_summary?.reasoning || parsed.analysisSummary?.reasoning || null,
+          },
+          questions: [],
+          refined_domain_analysis: null,
+          updated_domains: [],
+          next_round_focus: null,
+          last_analysis_data: parseDomainAnalysisResult(parsed),
+          roundId: 0,
+          roundNumber: 0,
+        };
+      }
+      
+      let lastAnalysisData = parsed.last_analysis_data || parsed.lastAnalysisData || parsed.LastAnalysisData;
+      if (!lastAnalysisData && isDomainAnalysisResult(parsed)) {
+        lastAnalysisData = parsed;
+      }
+      
+      return {
+        round_metadata: parsed.round_metadata || parsed.roundMetadata || {
+          round_number: parsed.round_metadata?.round_number || parsed.roundMetadata?.roundNumber || 0,
+          confidence_score_before: parsed.round_metadata?.confidence_score_before || parsed.roundMetadata?.confidenceScoreBefore || 0,
+          confidence_score_after_expected: parsed.round_metadata?.confidence_score_after_expected || parsed.roundMetadata?.confidenceScoreAfterExpected || 0,
+          questions_count: parsed.round_metadata?.questions_count || parsed.roundMetadata?.questionsCount || 0,
+          requires_another_round: parsed.round_metadata?.requires_another_round ?? parsed.roundMetadata?.requiresAnotherRound ?? true,
+          reasoning: parsed.round_metadata?.reasoning || parsed.roundMetadata?.reasoning || null,
+        },
+        questions: (parsed.questions || []).map((q: any) => ({
+          question_id: q.question_id || q.questionId || 0,
+          question: q.question || q.questionText || null,
+          reason: q.reason || null,
+          affects_domains: q.affects_domains || q.affectsDomains || null,
+          priority: q.priority || null,
+          expected_answer_type: q.expected_answer_type || q.expectedAnswerType || null,
+          follow_up_if_answer: q.follow_up_if_answer || q.followUpIfAnswer || null,
+        })),
+        refined_domain_analysis: parsed.refined_domain_analysis || parsed.refinedDomainAnalysis || null,
+        updated_domains: (parsed.updated_domains || parsed.updatedDomains || []).map((d: any) => ({
+          domain_name: d.domain_name || d.domainName || null,
+          estimated_entities: d.estimated_entities || d.estimatedEntities || 0,
+          changes: d.changes || null,
+          new_probable_entities: d.new_probable_entities || d.newProbableEntities || null,
+        })),
+        next_round_focus: parsed.next_round_focus || parsed.nextRoundFocus || null,
+        last_analysis_data: parseDomainAnalysisResult(lastAnalysisData),
+        roundId: parsed.roundId || parsed.round_id || 0,
+        roundNumber: parsed.roundNumber || parsed.round_number || 0,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const handleViewAnalysis = async (session: ConversationSession, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsLoadingAnalysis(true);
+    setShowAnalysisDialog(true);
+    
+    try {
+      const metadata = await apiClient.getSessionMetadata(session.sessionId);
+      const rounds = (metadata as any).rounds || [];
+      
+      // Find the last round with AI analysis
+      let fullAnalysis: RoundAnalysisModel | null = null;
+      for (let i = rounds.length - 1; i >= 0; i--) {
+        const round = rounds[i];
+        const aiAnalysisJson =
+          round.aiAnalysisJson ??
+          round.ai_analysis_json ??
+          round.AiAnalysisJson ??
+          null;
+        if (aiAnalysisJson && aiAnalysisJson !== "" && aiAnalysisJson !== "null") {
+          fullAnalysis = parseAiAnalysisJson(aiAnalysisJson);
+          break;
+        }
+      }
+      
+      setAnalysisData({
+        projectName: session.projectName || "Project",
+        analysis: fullAnalysis,
+        domainAnalysis: fullAnalysis?.last_analysis_data || null,
+      });
+    } catch (error) {
+      console.error("Failed to fetch analysis:", error);
+      toast({
+        title: "Failed to load analysis",
+        description: "Please try again",
+        variant: "destructive",
+      });
+      setShowAnalysisDialog(false);
+    } finally {
+      setIsLoadingAnalysis(false);
+    }
+  };
+
   const renderSessionCard = (
     session: ConversationSession,
     isCompleted: boolean
@@ -516,14 +700,28 @@ const Dashboard = () => {
             </AlertDialog>
 
             {isCompleted ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => handleDownload(session.sessionId, e)}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleViewAnalysis(session, e)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>View Analysis</TooltipContent>
+                </Tooltip>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => handleDownload(session.sessionId, e)}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+              </>
             ) : (
               <Button
                 variant="hero-outline"
@@ -909,6 +1107,47 @@ const Dashboard = () => {
             >
               <CreditCard className="w-4 h-4 mr-2" />
               Go to My Plan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Analysis Dialog */}
+      <Dialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Layers className="w-5 h-5 text-primary" />
+              Domain Analysis - {analysisData?.projectName}
+            </DialogTitle>
+            <DialogDescription>
+              Full AI analysis from the last completed round
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="flex-1 pr-4">
+            {isLoadingAnalysis ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span className="ml-3 text-muted-foreground">Loading analysis...</span>
+              </div>
+            ) : analysisData?.domainAnalysis || analysisData?.analysis ? (
+              <DomainAnalysisPanel
+                domainAnalysis={analysisData.domainAnalysis}
+                domains={analysisData.analysis?.updated_domains}
+                analysis={analysisData.analysis || undefined}
+              />
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <Database className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No analysis data available for this project.</p>
+              </div>
+            )}
+          </ScrollArea>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAnalysisDialog(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
