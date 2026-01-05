@@ -1114,7 +1114,7 @@ const Dashboard = () => {
 
       {/* Analysis Dialog */}
       <Dialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Layers className="w-5 h-5 text-primary" />
@@ -1124,8 +1124,8 @@ const Dashboard = () => {
               Full AI analysis from the last completed round
             </DialogDescription>
           </DialogHeader>
-          
-          <ScrollArea className="flex-1 min-h-0 max-h-[calc(90vh-180px)] pr-4">
+
+          <ScrollArea type="always" className="flex-1 min-h-0 pr-4">
             {isLoadingAnalysis ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -1145,7 +1145,7 @@ const Dashboard = () => {
             )}
           </ScrollArea>
 
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0">
             <Button variant="outline" onClick={() => setShowAnalysisDialog(false)}>
               Close
             </Button>
