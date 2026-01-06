@@ -208,9 +208,11 @@ const Pricing = () => {
                           <span className="text-4xl font-bold">
                             ${plan.priceMonthly}
                           </span>
-                          <span className="text-muted-foreground ml-2">
-                            / month
-                          </span>
+                          {plan.priceMonthly !== 0 ? (
+                            <span className="text-muted-foreground ml-2">
+                              / month
+                            </span>
+                          ) : null}
                         </>
                       )}
                     </div>

@@ -13,10 +13,9 @@ import { Layout } from "@/components/layout/Layout";
 import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
 
 const stats = [
-  { value: "1-3 min", label: "Generation Time", icon: Clock },
+  { value: "~10 min", label: "Generation Time", icon: Clock },
   { value: "90.7%", label: "Cost Savings", icon: DollarSign },
   { value: "75%", label: "Production-Ready", icon: Code2 },
-  { value: "50-80", label: "Files Generated", icon: Sparkles },
 ];
 
 const Home = () => {
@@ -95,7 +94,7 @@ const Home = () => {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto"
+            className="mt-20 grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto"
           >
             {stats.map((stat, index) => (
               <motion.div
@@ -225,7 +224,8 @@ const Home = () => {
               <span className="text-gradient">Real Engineers</span>
             </h2>
             <p className="text-lg text-muted-foreground">
-              Join thousands of developers who are shipping faster with DomForgeAI
+              Join thousands of developers who are shipping faster with
+              DomForgeAI
             </p>
           </motion.div>
 
