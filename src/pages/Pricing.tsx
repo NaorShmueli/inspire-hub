@@ -156,7 +156,7 @@ const Pricing = () => {
               </p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
               {plans.map((plan, index) => {
                 const Icon = getPlanIcon(plan.name);
                 const isPopular =
@@ -174,7 +174,7 @@ const Pricing = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className={`relative rounded-2xl p-8 ${
+                    className={`relative rounded-2xl p-8 h-full flex flex-col ${
                       isPopular
                         ? "glass border-2 border-primary shadow-glow"
                         : "glass"
@@ -229,7 +229,7 @@ const Pricing = () => {
 
                     {/* Plan Highlights */}
                     {plan.highlights && plan.highlights.length > 0 && (
-                      <ul className="space-y-4 mb-8">
+                      <ul className="space-y-4 mb-8 flex-grow">
                         {plan.highlights
                           .sort((a, b) => a.sortOrder - b.sortOrder)
                           .map((highlight, i) => (
@@ -243,16 +243,18 @@ const Pricing = () => {
                       </ul>
                     )}
 
-                    {showButton && (
-                      <Button
-                        variant={isPopular ? "hero" : "outline"}
-                        size="lg"
-                        className="w-full"
-                        onClick={() => handleSelectPlan(plan)}
-                      >
-                        {plan.isContactSales ? "Contact Sales" : "Get Started"}
-                      </Button>
-                    )}
+                    <div className="mt-auto">
+                      {showButton && (
+                        <Button
+                          variant={isPopular ? "hero" : "outline"}
+                          size="lg"
+                          className="w-full"
+                          onClick={() => handleSelectPlan(plan)}
+                        >
+                          {plan.isContactSales ? "Contact Sales" : "Get Started"}
+                        </Button>
+                      )}
+                    </div>
                   </motion.div>
                 );
               })}
