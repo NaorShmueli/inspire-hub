@@ -13,9 +13,9 @@ import { Layout } from "@/components/layout/Layout";
 import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
 
 const stats = [
-  { value: "~10 min", label: "Generation Time", icon: Clock },
-  { value: "90.7%", label: "Cost Savings", icon: DollarSign },
-  { value: "75%", label: "Production-Ready", icon: Code2 },
+  { value: "~10 min", label: "Average Generation Time", icon: Clock },
+  { value: "Fraction Cost", label: "Cost Savings", icon: DollarSign },
+  { value: "Extensible", label: "Generated Architecture", icon: Code2 },
 ];
 
 const Home = () => {
@@ -94,7 +94,7 @@ const Home = () => {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-20 grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto"
+            className="mt-20 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 md:gap-6 max-w-4xl mx-auto"
           >
             {stats.map((stat, index) => (
               <motion.div
@@ -110,7 +110,7 @@ const Home = () => {
                 <div className="text-3xl md:text-4xl font-bold text-gradient mb-1">
                   {stat.value}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground whitespace-normal break-words mx-auto">
                   {stat.label}
                 </div>
               </motion.div>
