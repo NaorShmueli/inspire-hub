@@ -18,7 +18,8 @@ import type {
   FeedbackRequest,
 } from "./api-types";
 
-const API_BASE_URL = "https://dom-froge-ai-api.com/api";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://dom-froge-ai-api.com/api";
 
 class ApiClient {
   private accessToken: string | null = null;

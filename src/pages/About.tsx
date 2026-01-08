@@ -1,13 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import {
-  Target,
-  Lightbulb,
-  Users,
-  ArrowRight,
-  Mail,
-} from "lucide-react";
+import { Target, Lightbulb, Users, ArrowRight, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import { ContactSalesDialog } from "@/components/ContactSalesDialog";
@@ -17,19 +11,19 @@ const values = [
     icon: Target,
     title: "Mission",
     description:
-      "To accelerate microservices adoption by providing AI-powered domain analysis and architecture generation, helping teams move from concept to implementation faster.",
+      "Accelerate microservices adoption by providing AI-powered domain analysis and architecture generation, enabling teams to move from concept to implementation faster.",
   },
   {
     icon: Lightbulb,
     title: "Vision",
     description:
-      "We envision a world where any organization can adopt microservices architecture best practices without extensive consulting costs or lengthy analysis phases.",
+      "Empower organizations to adopt microservices architecture best practices without costly consulting or lengthy analysis phases.",
   },
   {
     icon: Users,
     title: "Who We Serve",
     description:
-      "Companies, startups, individuals, and development teams who want to transform their systems into modern microservices architecture with professional-grade deliverables.",
+      "Companies, startups, and development teams seeking professional-grade microservices architecture delivered quickly and efficiently.",
   },
 ];
 
@@ -37,22 +31,22 @@ const useCases = [
   {
     title: "System Modernization",
     description:
-      "Organizations breaking down monolithic applications into well-defined microservices with clear boundaries.",
+      "Breaking down monolithic applications into well-defined microservices with clear boundaries.",
   },
   {
     title: "Greenfield Projects",
     description:
-      "Startups and teams starting new projects with a solid microservices foundation from day one.",
+      "Startups building new systems with a solid microservices foundation from day one.",
   },
   {
     title: "Architecture Documentation",
     description:
-      "Teams needing comprehensive C4 diagrams, database schemas, and API specifications for their systems.",
+      "Teams needing comprehensive C4 diagrams, database schemas, and API specifications.",
   },
   {
     title: "Rapid Prototyping",
     description:
-      "Quickly validating microservices architecture ideas with real, runnable .NET Core 8 code.",
+      "Quickly validate microservices architecture ideas with real, runnable .NET Core code.",
   },
 ];
 
@@ -65,7 +59,6 @@ const About = () => {
       <section className="pt-24 pb-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-glow opacity-30" />
-
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -77,8 +70,8 @@ const About = () => {
               About <span className="text-gradient">DomForgeAI</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground">
-              We're transforming how enterprise software is created, one
-              microservice at a time.
+              Transforming enterprise software development, one microservice at
+              a time.
             </p>
           </motion.div>
         </div>
@@ -100,25 +93,23 @@ const About = () => {
               </h2>
               <div className="space-y-4 text-muted-foreground text-lg">
                 <p>
-                  DomForgeAI is a SaaS platform that provides comprehensive
-                  domain analysis for companies, individuals, and startups
-                  looking to implement microservices architecture the right way.
+                  DomForgeAI provides AI-powered domain analysis for companies,
+                  startups, and development teams seeking professional-grade
+                  microservices architecture.
                 </p>
                 <p>
-                  Through an intelligent AI-guided questionnaire, we analyze
-                  your business requirements and identify domain boundaries with
-                  confidence scoring. The iterative process ensures we truly
-                  understand your system before generating any architecture.
+                  Our intelligent questionnaire analyzes business requirements,
+                  identifies domain boundaries, and uses confidence scoring to
+                  ensure deep understanding before generating any architecture.
                 </p>
                 <p>
-                  The output is a complete package: C4 architecture diagrams,
-                  .NET Core 8 Visual Studio solutions with boilerplate
-                  implementations, DBML database schemas, and OpenAPI YAML
-                  specifications for each microservice.
+                  The result is a complete, production-ready package: C4
+                  architecture diagrams, .NET Core solutions, DBML schemas, and
+                  OpenAPI YAML specifications for each microservice.
                 </p>
                 <p className="text-foreground font-medium">
-                  Everything is delivered as a downloadable ZIP file, ready to
-                  extend and deploy.
+                  Delivered as a downloadable ZIP file, ready to extend, deploy,
+                  and scale.
                 </p>
               </div>
             </motion.div>
@@ -176,7 +167,7 @@ const About = () => {
               Real-World <span className="text-gradient">Use Cases</span>
             </h2>
             <p className="text-lg text-muted-foreground">
-              See how organizations are using DomForgeAI to transform their
+              Explore how organizations leverage DomForgeAI to accelerate
               development.
             </p>
           </motion.div>
@@ -213,11 +204,14 @@ const About = () => {
               Get in Touch
             </h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Have questions about DomForgeAI? We'd love to hear from you. Our
-              team is here to help.
+              Have questions about DomForgeAI? Our team is ready to assist you.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="hero" size="lg" onClick={() => setShowContactSalesDialog(true)}>
+              <Button
+                variant="hero"
+                size="lg"
+                onClick={() => setShowContactSalesDialog(true)}
+              >
                 <Mail className="w-5 h-5" />
                 Contact Sales
               </Button>
@@ -253,9 +247,9 @@ const About = () => {
       </section>
 
       {/* Contact Sales Dialog */}
-      <ContactSalesDialog 
-        open={showContactSalesDialog} 
-        onOpenChange={setShowContactSalesDialog} 
+      <ContactSalesDialog
+        open={showContactSalesDialog}
+        onOpenChange={setShowContactSalesDialog}
       />
     </Layout>
   );

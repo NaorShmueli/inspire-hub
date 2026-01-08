@@ -42,7 +42,7 @@ const Home = () => {
             >
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
                 <Zap className="w-4 h-4" />
-                AI-Powered Enterprise Code Generation
+                AI-Powered Enterprise Architecture Generation
               </span>
             </motion.div>
 
@@ -63,10 +63,10 @@ const Home = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
             >
-              DomForgeAI transforms weeks of development into minutes. Generate
-              complete microservices architecture packages including C4
-              diagrams, .NET Core 8 solutions, DBML schemas, and OpenAPI
-              specifications.
+              DomForgeAI transforms weeks of architecture and boilerplate
+              development into minutes. Generate production-ready microservices
+              architecture packages including C4 diagrams, .NET Core projects
+              solutions, DBML schemas, and OpenAPI specifications.
             </motion.p>
 
             <motion.div
@@ -134,8 +134,8 @@ const Home = () => {
               <span className="text-gradient">Boilerplate Code</span>
             </h2>
             <p className="text-lg text-muted-foreground">
-              70-80% of microservice code is repetitive. Let AI handle the
-              mundane while you focus on solving complex business problems.
+              70–80% of microservice architecture is repetitive. Let AI handle
+              the mundane while you focus on solving complex business problems.
             </p>
           </motion.div>
 
@@ -154,15 +154,15 @@ const Home = () => {
               <ul className="space-y-3">
                 <li className="flex items-start gap-3 text-muted-foreground">
                   <span className="text-destructive mt-1">✗</span>
-                  16-24 days per microservice
+                  Weeks of setup per microservice
                 </li>
                 <li className="flex items-start gap-3 text-muted-foreground">
                   <span className="text-destructive mt-1">✗</span>
-                  $35,000 - $80,000 development cost
+                  High engineering and coordination cost
                 </li>
                 <li className="flex items-start gap-3 text-muted-foreground">
                   <span className="text-destructive mt-1">✗</span>
-                  Senior engineers typing boilerplate
+                  Senior engineers writing boilerplate
                 </li>
                 <li className="flex items-start gap-3 text-muted-foreground">
                   <span className="text-destructive mt-1">✗</span>
@@ -185,11 +185,11 @@ const Home = () => {
               <ul className="space-y-3">
                 <li className="flex items-start gap-3 text-muted-foreground">
                   <span className="text-primary mt-1">✓</span>
-                  2-3 hours refinement time
+                  Hours instead of weeks
                 </li>
                 <li className="flex items-start gap-3 text-muted-foreground">
                   <span className="text-primary mt-1">✓</span>
-                  Under $200 per microservice
+                  Fraction of traditional cost
                 </li>
                 <li className="flex items-start gap-3 text-muted-foreground">
                   <span className="text-primary mt-1">✓</span>
@@ -197,11 +197,15 @@ const Home = () => {
                 </li>
                 <li className="flex items-start gap-3 text-muted-foreground">
                   <span className="text-primary mt-1">✓</span>
-                  Consistent enterprise patterns
+                  Consistent enterprise architecture patterns
                 </li>
               </ul>
             </motion.div>
           </div>
+
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Actual time and cost vary based on system complexity.
+          </p>
         </div>
       </section>
 

@@ -32,13 +32,24 @@ export const Footer = () => {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
-              AI-powered enterprise microservice generator. From business requirements to production-ready code in minutes.
+              AI-Powered Enterprise Architecture Generation. From Business
+              Requirements to Domain Boilerplate Code in Minutes
             </p>
             <div className="flex gap-4">
-              <a href="https://discord.gg/yV5w8ZbT" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+              <a
+                href="https://discord.gg/yV5w8ZbT"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
                 <MessageCircle className="w-5 h-5" />
               </a>
-              <a href="https://www.linkedin.com/company/domfrogeai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+              <a
+                href="https://www.linkedin.com/company/domfrogeai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
                 <Linkedin className="w-5 h-5" />
               </a>
             </div>

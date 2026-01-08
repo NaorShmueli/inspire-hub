@@ -135,8 +135,8 @@ const Pricing = () => {
               Simple, <span className="text-gradient">Transparent</span> Pricing
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground">
-              Save 99.7% compared to traditional development costs. Choose the
-              plan that fits your needs.
+              Enterprise-grade architecture at a fraction of the usual cost.
+              Choose the plan that fits your project
             </p>
           </motion.div>
         </div>
@@ -251,7 +251,9 @@ const Pricing = () => {
                           className="w-full"
                           onClick={() => handleSelectPlan(plan)}
                         >
-                          {plan.isContactSales ? "Contact Sales" : "Get Started"}
+                          {plan.isContactSales
+                            ? "Contact Sales"
+                            : "Get Started"}
                         </Button>
                       )}
                     </div>
@@ -266,6 +268,7 @@ const Pricing = () => {
       {/* Cost Comparison */}
       <section className="py-24">
         <div className="container mx-auto px-4">
+          {/* Section Intro */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -277,10 +280,12 @@ const Pricing = () => {
               The True <span className="text-gradient">Cost Comparison</span>
             </h2>
             <p className="text-lg text-muted-foreground">
-              See how DomForgeAI compares to traditional development costs.
+              See how DomForgeAI delivers enterprise-grade microservices at a
+              fraction of traditional development costs.
             </p>
           </motion.div>
 
+          {/* Cost Cards */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -289,16 +294,17 @@ const Pricing = () => {
             className="glass rounded-2xl p-8 max-w-3xl mx-auto"
           >
             <div className="space-y-6">
+              {/* Traditional Development */}
               <div className="flex justify-between items-center p-4 rounded-xl bg-destructive/10 border border-destructive/30">
                 <div>
                   <h4 className="font-semibold">Traditional Development</h4>
                   <p className="text-sm text-muted-foreground">
-                    Senior architect + development time
+                    Senior architect + full development cycle
                   </p>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-destructive">
-                    $35,000 - $80,000
+                    $10,000 - $25,000
                   </div>
                   <p className="text-sm text-muted-foreground">
                     per microservice
@@ -306,6 +312,7 @@ const Pricing = () => {
                 </div>
               </div>
 
+              {/* DomForgeAI */}
               <div className="flex justify-between items-center p-4 rounded-xl bg-primary/10 border border-primary/30">
                 <div>
                   <h4 className="font-semibold">With DomForgeAI</h4>
@@ -321,9 +328,14 @@ const Pricing = () => {
                 </div>
               </div>
 
-              <div className="text-center pt-4 border-t border-border">
-                <p className="text-muted-foreground mb-2">Your Savings</p>
-                <div className="text-4xl font-bold text-gradient">99.7%</div>
+              {/* Savings Highlight */}
+              <div className="text-center pt-6 border-t border-border">
+                <span className="inline-block mb-2 px-3 py-1 rounded-full bg-primary/20 text-primary font-medium text-sm">
+                  Cost-Effective
+                </span>
+                <div className="text-3xl md:text-4xl font-bold text-gradient">
+                  A fraction of traditional development costs
+                </div>
               </div>
             </div>
           </motion.div>
