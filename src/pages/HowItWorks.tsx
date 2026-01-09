@@ -20,7 +20,7 @@ const steps = [
     title: "Start Your Project",
     description:
       "Log in with Google and create a new project. Provide your project name and a brief description of the system you want to build.",
-    details: ["Google Sign-In", "Project Creation", "5 Free Credits"],
+    details: ["Google Sign-In", "Project Creation", "10 Free Credits"],
   },
   {
     number: "02",
