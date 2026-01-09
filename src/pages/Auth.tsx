@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Shield, Clock, Code2 } from "lucide-react";
+import { ArrowLeft, Shield, Clock, Code2, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.jpg";
 
 const benefits = [
-  { icon: Clock, text: "30-second generation time" },
-  { icon: Shield, text: "Enterprise-grade security" },
-  { icon: Code2, text: "Zero compilation errors" },
+  { icon: Clock, text: "Minutes-level architecture generation" },
+  { icon: Layers, text: "Enterprise-grade architecture pattern" },
+  { icon: Code2, text: "Clean, extensible code scaffolding" },
 ];
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,13 +31,16 @@ const Auth = () => {
       <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-hero p-12 flex-col justify-between">
         <div className="absolute inset-0 bg-gradient-glow opacity-30" />
         <div className="absolute top-20 right-20 w-72 h-72 bg-glow/10 rounded-full blur-3xl animate-pulse-glow" />
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-glow-secondary/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "1.5s" }} />
+        <div
+          className="absolute bottom-20 left-20 w-96 h-96 bg-glow-secondary/10 rounded-full blur-3xl animate-pulse-glow"
+          style={{ animationDelay: "1.5s" }}
+        />
 
         <div className="relative z-10">
           <Link to="/" className="flex items-center gap-2 group">
-            <img 
-              src={logo} 
-              alt="DomForgeAI" 
+            <img
+              src={logo}
+              alt="DomForgeAI"
               className="w-10 h-10 rounded-lg shadow-glow-sm group-hover:shadow-glow transition-shadow duration-300"
             />
             <span className="text-2xl font-bold text-foreground">
@@ -53,12 +56,11 @@ const Auth = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Transform Your{" "}
-              <span className="text-gradient">Development</span>
+              Transform Your <span className="text-gradient">Development</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-md">
-              Generate complete, production-ready microservices from business 
-              requirements in minutes, not weeks.
+              Generate complete microservice architecture and code scaffolding
+              from business requirements in minutes
             </p>
           </motion.div>
 
@@ -98,9 +100,9 @@ const Auth = () => {
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <Link to="/" className="flex items-center gap-2">
-              <img 
-                src={logo} 
-                alt="DomForgeAI" 
+              <img
+                src={logo}
+                alt="DomForgeAI"
                 className="w-10 h-10 rounded-lg shadow-glow-sm"
               />
               <span className="text-2xl font-bold text-foreground">
@@ -110,7 +112,9 @@ const Auth = () => {
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">Welcome Back</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">
+              Welcome Back
+            </h2>
             <p className="text-muted-foreground">
               Sign in to continue to DomForgeAI
             </p>
