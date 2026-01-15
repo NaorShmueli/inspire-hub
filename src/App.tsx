@@ -17,6 +17,7 @@ import Questionnaire from "./pages/Questionnaire";
 import GenerationStatus from "./pages/GenerationStatus";
 import MyPlan from "./pages/MyPlan";
 import Feedback from "./pages/Feedback";
+import Support from "./pages/Support";
 import ErrorPage from "./pages/ErrorPage";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/error" element={<ErrorPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/support" element={<Support />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/project/:sessionId/questionnaire" element={<ProtectedRoute><Questionnaire /></ProtectedRoute>} />
             <Route path="/project/:sessionId/status" element={<ProtectedRoute><GenerationStatus /></ProtectedRoute>} />
