@@ -21,7 +21,7 @@ export const Navbar = () => {
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  //const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
 
   useEffect(() => {
     const fetchCredits = async () => {
@@ -45,9 +45,9 @@ export const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
-              <img 
-                src={logo} 
-                alt="DomForgeAI" 
+              <img
+                src={logo}
+                alt="DomForgeAI"
                 className="w-8 h-8 rounded-lg shadow-glow-sm group-hover:shadow-glow transition-shadow duration-300"
               />
             </div>
@@ -75,7 +75,7 @@ export const Navbar = () => {
 
           {/* Right side - Auth & Credits */}
           <div className="hidden md:flex items-center gap-3">
-              {isAuthenticated ? (
+            {isAuthenticated ? (
               <>
                 {/* Credit Balance */}
                 {creditBalance !== null && (
@@ -99,10 +99,10 @@ export const Navbar = () => {
                 </Link>
 
                 {/* Feedback Button */}
-                <Button variant="outline" size="sm" onClick={() => setShowFeedbackDialog(true)}>
+                {/*            <Button variant="outline" size="sm" onClick={() => setShowFeedbackDialog(true)}>
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Feedback
-                </Button>
+                </Button> */}
 
                 <Button variant="ghost" size="sm" onClick={logout}>
                   <LogOut className="w-4 h-4" />
@@ -119,7 +119,7 @@ export const Navbar = () => {
 
           {/* Mobile Actions */}
           <div className="md:hidden flex items-center gap-2">
-            {isAuthenticated && (
+            {/*             {isAuthenticated && (
               <Button
                 variant="outline"
                 size="icon"
@@ -129,7 +129,7 @@ export const Navbar = () => {
                 <MessageSquare />
                 <span className="sr-only">Feedback</span>
               </Button>
-            )}
+            )} */}
 
             {/* Mobile Menu Button */}
             <button
@@ -137,7 +137,11 @@ export const Navbar = () => {
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? "Close menu" : "Open menu"}
             >
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>
@@ -167,7 +171,7 @@ export const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
-              
+
               {isAuthenticated ? (
                 <>
                   {creditBalance !== null && (
@@ -187,16 +191,27 @@ export const Navbar = () => {
                       Dashboard
                     </Button>
                   </Link>
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
+                  {/*                   <Button
+                    variant="outline"
+                    size="lg"
                     className="w-full"
-                    onClick={() => { setShowFeedbackDialog(true); setIsOpen(false); }}
+                    onClick={() => {
+                      setShowFeedbackDialog(true);
+                      setIsOpen(false);
+                    }}
                   >
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Feedback
-                  </Button>
-                  <Button variant="ghost" size="lg" className="w-full" onClick={() => { logout(); setIsOpen(false); }}>
+                  </Button> */}
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    className="w-full"
+                    onClick={() => {
+                      logout();
+                      setIsOpen(false);
+                    }}
+                  >
                     <LogOut className="w-4 h-4 mr-2" />
                     Logout
                   </Button>
@@ -214,7 +229,10 @@ export const Navbar = () => {
       </AnimatePresence>
 
       {/* Feedback Dialog */}
-      <FeedbackDialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog} />
+      {/*       <FeedbackDialog
+        open={showFeedbackDialog}
+        onOpenChange={setShowFeedbackDialog}
+      /> */}
     </nav>
   );
 };

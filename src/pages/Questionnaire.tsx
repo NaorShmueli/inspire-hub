@@ -277,14 +277,17 @@ const getConfidenceFromResponse = (response: RoundAnalysisModel): number => {
   const analysisConfidence =
     response.last_analysis_data?.analysis_summary?.confidence_score ??
     (response.last_analysis_data as any)?.analysisSummary?.confidenceScore;
-  
-  if (typeof analysisConfidence === 'number' && analysisConfidence > 0) {
+
+  if (typeof analysisConfidence === "number" && analysisConfidence > 0) {
     // If confidence is already a percentage (> 1), return as-is; otherwise multiply by 100
-    return analysisConfidence > 1 ? analysisConfidence : analysisConfidence * 100;
+    return analysisConfidence > 1
+      ? analysisConfidence
+      : analysisConfidence * 100;
   }
-  
+
   // Fallback: round_metadata.confidence_score_after_expected
-  const metadataConfidence = response.round_metadata?.confidence_score_after_expected ?? 0;
+  const metadataConfidence =
+    response.round_metadata?.confidence_score_after_expected ?? 0;
   return metadataConfidence * 100;
 };
 
@@ -539,7 +542,9 @@ const Questionnaire = () => {
         });
 
         // Add the AI analysis summary after the Q&A with domain information
-        const roundConfidencePercent = Math.round(getConfidenceFromResponse(analysis));
+        const roundConfidencePercent = Math.round(
+          getConfidenceFromResponse(analysis)
+        );
 
         let analysisContent = `Analysis complete. Confidence: ${roundConfidencePercent}%`;
 
@@ -1078,7 +1083,7 @@ const Questionnaire = () => {
     setMessages((prev) => [...prev, approvalMessage]);
 
     try {
-      apiClient.approveDomain(Number(sessionId));
+      await apiClient.approveDomain(Number(sessionId));
 
       toast({
         title: "Domain approved!",
