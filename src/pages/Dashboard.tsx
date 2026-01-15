@@ -55,7 +55,11 @@ import {
   getCachedFoundationQuestions,
 } from "@/lib/foundation-question-cache";
 import { toast } from "@/hooks/use-toast";
-import type { ConversationSession, RoundAnalysisModel, DomainAnalysisResult } from "@/lib/api-types";
+import type {
+  ConversationSession,
+  RoundAnalysisModel,
+  DomainAnalysisResult,
+} from "@/lib/api-types";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { DomainAnalysisPanel } from "@/components/DomainAnalysisPanel";
 import logo from "@/assets/logo.jpg";
@@ -77,14 +81,15 @@ const Dashboard = () => {
   >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
-  const [showInsufficientCreditsDialog, setShowInsufficientCreditsDialog] = useState(false);
+  const [showInsufficientCreditsDialog, setShowInsufficientCreditsDialog] =
+    useState(false);
   const [pendingAction, setPendingAction] = useState<{
-    type: 'newProject' | 'download' | 'continue';
+    type: "newProject" | "download" | "continue";
     sessionId?: number;
     event?: React.MouseEvent;
   } | null>(null);
   const [isCheckingCredits, setIsCheckingCredits] = useState(false);
-  
+
   // Analysis dialog state
   const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
   const [analysisData, setAnalysisData] = useState<{
@@ -95,7 +100,7 @@ const Dashboard = () => {
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
   const checkCreditsAndProceed = async (
-    actionType: 'newProject' | 'download' | 'continue',
+    actionType: "newProject" | "download" | "continue",
     sessionId?: number,
     event?: React.MouseEvent
   ) => {
@@ -104,11 +109,11 @@ const Dashboard = () => {
       const creditData = await apiClient.getCreditBalance();
       if (creditData.creditsBalance > 2) {
         // Proceed with action
-        if (actionType === 'newProject') {
+        if (actionType === "newProject") {
           setShowNewProject(true);
-        } else if (actionType === 'download' && sessionId && event) {
+        } else if (actionType === "download" && sessionId && event) {
           await executeDownload(sessionId, event);
-        } else if (actionType === 'continue' && sessionId && event) {
+        } else if (actionType === "continue" && sessionId && event) {
           await executeContinue(sessionId, event);
         }
       } else {
@@ -198,7 +203,7 @@ const Dashboard = () => {
 
   const handleDownload = async (sessionId: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    await checkCreditsAndProceed('download', sessionId, e);
+    await checkCreditsAndProceed("download", sessionId, e);
   };
 
   const executeDownload = async (sessionId: number, e: React.MouseEvent) => {
@@ -228,7 +233,7 @@ const Dashboard = () => {
 
   const handleContinue = async (sessionId: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    await checkCreditsAndProceed('continue', sessionId, e);
+    await checkCreditsAndProceed("continue", sessionId, e);
   };
 
   const executeContinue = async (sessionId: number, e: React.MouseEvent) => {
@@ -240,7 +245,7 @@ const Dashboard = () => {
       const rawRounds = (metadata as any).rounds || [];
 
       // If generating_packages, go to status page
-      if (currentPhase === "generating_packages") {
+      if (currentPhase === "generating_packages" || currentPhase === "queued") {
         navigate(`/project/${sessionId}/status`);
         return;
       }
@@ -269,9 +274,10 @@ const Dashboard = () => {
 
       // If failed, show domain approval UI with chat history
       if (currentPhase === "failed") {
-        const lastRound = normalizedRounds.length > 0 
-          ? normalizedRounds[normalizedRounds.length - 1] 
-          : null;
+        const lastRound =
+          normalizedRounds.length > 0
+            ? normalizedRounds[normalizedRounds.length - 1]
+            : null;
         const lastAnalysis = lastRound?.aiAnalysisJson
           ? JSON.parse(lastRound.aiAnalysisJson)
           : null;
@@ -327,9 +333,10 @@ const Dashboard = () => {
         }
 
         // No incomplete round found, start new round
-        const lastRound = normalizedRounds.length > 0 
-          ? normalizedRounds[normalizedRounds.length - 1] 
-          : null;
+        const lastRound =
+          normalizedRounds.length > 0
+            ? normalizedRounds[normalizedRounds.length - 1]
+            : null;
         const lastAnalysis = lastRound?.aiAnalysisJson
           ? JSON.parse(lastRound.aiAnalysisJson)
           : null;
@@ -420,7 +427,9 @@ const Dashboard = () => {
     }
   };
 
-  const [deletingSessionId, setDeletingSessionId] = useState<number | null>(null);
+  const [deletingSessionId, setDeletingSessionId] = useState<number | null>(
+    null
+  );
 
   const handleDelete = async (sessionId: number, projectName: string) => {
     setDeletingSessionId(sessionId);
@@ -450,84 +459,136 @@ const Dashboard = () => {
   };
 
   // Helper to parse DomainAnalysisResult from raw data
-  const parseDomainAnalysisResult = (data: any): DomainAnalysisResult | null => {
+  const parseDomainAnalysisResult = (
+    data: any
+  ): DomainAnalysisResult | null => {
     if (!data) return null;
-    
+
     return {
       analysis_summary: data.analysis_summary || data.analysisSummary || null,
-      identified_domains: (data.identified_domains || data.identifiedDomains || []).map((d: any) => ({
+      identified_domains: (
+        data.identified_domains ||
+        data.identifiedDomains ||
+        []
+      ).map((d: any) => ({
         domain_name: d.domain_name || d.domainName || null,
         description: d.description || null,
-        business_capability: d.business_capability || d.businessCapability || null,
+        business_capability:
+          d.business_capability || d.businessCapability || null,
         estimated_entities: d.estimated_entities || d.estimatedEntities || 0,
         probable_entities: d.probable_entities || d.probableEntities || null,
-        key_responsibilities: d.key_responsibilities || d.keyResponsibilities || null,
+        key_responsibilities:
+          d.key_responsibilities || d.keyResponsibilities || null,
         user_types_served: d.user_types_served || d.userTypesServed || null,
         confidence: d.confidence || 0,
       })),
-      domain_relationships: (data.domain_relationships || data.domainRelationships || []).map((r: any) => ({
+      domain_relationships: (
+        data.domain_relationships ||
+        data.domainRelationships ||
+        []
+      ).map((r: any) => ({
         from_domain: r.from_domain || r.fromDomain || null,
         to_domain: r.to_domain || r.toDomain || null,
         relationship_type: r.relationship_type || r.relationshipType || null,
-        interaction_pattern: r.interaction_pattern || r.interactionPattern || null,
+        interaction_pattern:
+          r.interaction_pattern || r.interactionPattern || null,
         description: r.description || null,
         data_shared: r.data_shared || r.dataShared || null,
         notes: r.notes || null,
       })),
-      cross_cutting_concerns: (data.cross_cutting_concerns || data.crossCuttingConcerns || []).map((c: any) => ({
+      cross_cutting_concerns: (
+        data.cross_cutting_concerns ||
+        data.crossCuttingConcerns ||
+        []
+      ).map((c: any) => ({
         concern: c.concern || null,
         affected_domains: c.affected_domains || c.affectedDomains || null,
         recommendation: c.recommendation || null,
         notes: c.notes || null,
       })),
-      integration_points: (data.integration_points || data.integrationPoints || []).map((i: any) => ({
+      integration_points: (
+        data.integration_points ||
+        data.integrationPoints ||
+        []
+      ).map((i: any) => ({
         external_system: i.external_system || i.externalSystem || null,
         integrating_domain: i.integrating_domain || i.integratingDomain || null,
         integration_type: i.integration_type || i.integrationType || null,
         purpose: i.purpose || null,
         criticality: i.criticality || null,
       })),
-      compliance_impacts: (data.compliance_impacts || data.complianceImpacts || []).map((c: any) => ({
+      compliance_impacts: (
+        data.compliance_impacts ||
+        data.complianceImpacts ||
+        []
+      ).map((c: any) => ({
         regulation: c.regulation || null,
         affected_domains: c.affected_domains || c.affectedDomains || null,
         requirements: c.requirements || null,
-        architectural_impact: c.architectural_impact || c.architecturalImpact || null,
+        architectural_impact:
+          c.architectural_impact || c.architecturalImpact || null,
       })),
-      scale_considerations: data.scale_considerations || data.scaleConsiderations || null,
-      potential_issues: (data.potential_issues || data.potentialIssues || []).map((p: any) => ({
+      scale_considerations:
+        data.scale_considerations || data.scaleConsiderations || null,
+      potential_issues: (
+        data.potential_issues ||
+        data.potentialIssues ||
+        []
+      ).map((p: any) => ({
         issue: p.issue || null,
         description: p.description || null,
         recommendation: p.recommendation || null,
         severity: p.severity || null,
       })),
-      recommended_microservices_count: data.recommended_microservices_count || data.recommendedMicroservicesCount || null,
+      recommended_microservices_count:
+        data.recommended_microservices_count ||
+        data.recommendedMicroservicesCount ||
+        null,
     };
   };
 
   // Helper to check if an object looks like a DomainAnalysisResult
   const isDomainAnalysisResult = (obj: any): boolean => {
-    if (!obj || typeof obj !== 'object') return false;
+    if (!obj || typeof obj !== "object") return false;
     return (
-      (obj.analysis_summary || obj.analysisSummary) ||
-      (obj.identified_domains || obj.identifiedDomains) ||
-      (obj.recommended_microservices_count || obj.recommendedMicroservicesCount)
+      obj.analysis_summary ||
+      obj.analysisSummary ||
+      obj.identified_domains ||
+      obj.identifiedDomains ||
+      obj.recommended_microservices_count ||
+      obj.recommendedMicroservicesCount
     );
   };
 
   // Parse AI analysis JSON
-  const parseAiAnalysisJson = (jsonString: string): RoundAnalysisModel | null => {
+  const parseAiAnalysisJson = (
+    jsonString: string
+  ): RoundAnalysisModel | null => {
     try {
       const parsed = JSON.parse(jsonString);
-      
-      if (isDomainAnalysisResult(parsed) && !parsed.round_metadata && !parsed.roundMetadata) {
+
+      if (
+        isDomainAnalysisResult(parsed) &&
+        !parsed.round_metadata &&
+        !parsed.roundMetadata
+      ) {
         return {
           round_metadata: {
             round_number: 0,
             confidence_score_before: 0,
-            confidence_score_after_expected: parsed.analysis_summary?.confidence_score || parsed.analysisSummary?.confidenceScore || 0,
+            confidence_score_after_expected:
+              parsed.analysis_summary?.confidence_score ||
+              parsed.analysisSummary?.confidenceScore ||
+              0,
             questions_count: 0,
-            requires_another_round: parsed.analysis_summary?.requires_followup ?? parsed.analysisSummary?.requiresFollowup ?? false,
-            reasoning: parsed.analysis_summary?.reasoning || parsed.analysisSummary?.reasoning || null,
+            requires_another_round:
+              parsed.analysis_summary?.requires_followup ??
+              parsed.analysisSummary?.requiresFollowup ??
+              false,
+            reasoning:
+              parsed.analysis_summary?.reasoning ||
+              parsed.analysisSummary?.reasoning ||
+              null,
           },
           questions: [],
           refined_domain_analysis: null,
@@ -538,38 +599,71 @@ const Dashboard = () => {
           roundNumber: 0,
         };
       }
-      
-      let lastAnalysisData = parsed.last_analysis_data || parsed.lastAnalysisData || parsed.LastAnalysisData;
+
+      let lastAnalysisData =
+        parsed.last_analysis_data ||
+        parsed.lastAnalysisData ||
+        parsed.LastAnalysisData;
       if (!lastAnalysisData && isDomainAnalysisResult(parsed)) {
         lastAnalysisData = parsed;
       }
-      
+
       return {
-        round_metadata: parsed.round_metadata || parsed.roundMetadata || {
-          round_number: parsed.round_metadata?.round_number || parsed.roundMetadata?.roundNumber || 0,
-          confidence_score_before: parsed.round_metadata?.confidence_score_before || parsed.roundMetadata?.confidenceScoreBefore || 0,
-          confidence_score_after_expected: parsed.round_metadata?.confidence_score_after_expected || parsed.roundMetadata?.confidenceScoreAfterExpected || 0,
-          questions_count: parsed.round_metadata?.questions_count || parsed.roundMetadata?.questionsCount || 0,
-          requires_another_round: parsed.round_metadata?.requires_another_round ?? parsed.roundMetadata?.requiresAnotherRound ?? true,
-          reasoning: parsed.round_metadata?.reasoning || parsed.roundMetadata?.reasoning || null,
-        },
+        round_metadata: parsed.round_metadata ||
+          parsed.roundMetadata || {
+            round_number:
+              parsed.round_metadata?.round_number ||
+              parsed.roundMetadata?.roundNumber ||
+              0,
+            confidence_score_before:
+              parsed.round_metadata?.confidence_score_before ||
+              parsed.roundMetadata?.confidenceScoreBefore ||
+              0,
+            confidence_score_after_expected:
+              parsed.round_metadata?.confidence_score_after_expected ||
+              parsed.roundMetadata?.confidenceScoreAfterExpected ||
+              0,
+            questions_count:
+              parsed.round_metadata?.questions_count ||
+              parsed.roundMetadata?.questionsCount ||
+              0,
+            requires_another_round:
+              parsed.round_metadata?.requires_another_round ??
+              parsed.roundMetadata?.requiresAnotherRound ??
+              true,
+            reasoning:
+              parsed.round_metadata?.reasoning ||
+              parsed.roundMetadata?.reasoning ||
+              null,
+          },
         questions: (parsed.questions || []).map((q: any) => ({
           question_id: q.question_id || q.questionId || 0,
           question: q.question || q.questionText || null,
           reason: q.reason || null,
           affects_domains: q.affects_domains || q.affectsDomains || null,
           priority: q.priority || null,
-          expected_answer_type: q.expected_answer_type || q.expectedAnswerType || null,
-          follow_up_if_answer: q.follow_up_if_answer || q.followUpIfAnswer || null,
+          expected_answer_type:
+            q.expected_answer_type || q.expectedAnswerType || null,
+          follow_up_if_answer:
+            q.follow_up_if_answer || q.followUpIfAnswer || null,
         })),
-        refined_domain_analysis: parsed.refined_domain_analysis || parsed.refinedDomainAnalysis || null,
-        updated_domains: (parsed.updated_domains || parsed.updatedDomains || []).map((d: any) => ({
+        refined_domain_analysis:
+          parsed.refined_domain_analysis ||
+          parsed.refinedDomainAnalysis ||
+          null,
+        updated_domains: (
+          parsed.updated_domains ||
+          parsed.updatedDomains ||
+          []
+        ).map((d: any) => ({
           domain_name: d.domain_name || d.domainName || null,
           estimated_entities: d.estimated_entities || d.estimatedEntities || 0,
           changes: d.changes || null,
-          new_probable_entities: d.new_probable_entities || d.newProbableEntities || null,
+          new_probable_entities:
+            d.new_probable_entities || d.newProbableEntities || null,
         })),
-        next_round_focus: parsed.next_round_focus || parsed.nextRoundFocus || null,
+        next_round_focus:
+          parsed.next_round_focus || parsed.nextRoundFocus || null,
         last_analysis_data: parseDomainAnalysisResult(lastAnalysisData),
         roundId: parsed.roundId || parsed.round_id || 0,
         roundNumber: parsed.roundNumber || parsed.round_number || 0,
@@ -579,15 +673,18 @@ const Dashboard = () => {
     }
   };
 
-  const handleViewAnalysis = async (session: ConversationSession, e: React.MouseEvent) => {
+  const handleViewAnalysis = async (
+    session: ConversationSession,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
     setIsLoadingAnalysis(true);
     setShowAnalysisDialog(true);
-    
+
     try {
       const metadata = await apiClient.getSessionMetadata(session.sessionId);
       const rounds = (metadata as any).rounds || [];
-      
+
       // Find the last round with AI analysis
       let fullAnalysis: RoundAnalysisModel | null = null;
       for (let i = rounds.length - 1; i >= 0; i--) {
@@ -597,12 +694,16 @@ const Dashboard = () => {
           round.ai_analysis_json ??
           round.AiAnalysisJson ??
           null;
-        if (aiAnalysisJson && aiAnalysisJson !== "" && aiAnalysisJson !== "null") {
+        if (
+          aiAnalysisJson &&
+          aiAnalysisJson !== "" &&
+          aiAnalysisJson !== "null"
+        ) {
           fullAnalysis = parseAiAnalysisJson(aiAnalysisJson);
           break;
         }
       }
-      
+
       setAnalysisData({
         projectName: session.projectName || "Project",
         analysis: fullAnalysis,
@@ -690,7 +791,10 @@ const Dashboard = () => {
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete(session.sessionId, session.projectName || "");
+                      handleDelete(
+                        session.sessionId,
+                        session.projectName || ""
+                      );
                     }}
                   >
                     Delete Forever
@@ -756,7 +860,11 @@ const Dashboard = () => {
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="DomForgeAI" className="w-10 h-10 rounded-lg object-cover" />
+            <img
+              src={logo}
+              alt="DomForgeAI"
+              className="w-10 h-10 rounded-lg object-cover"
+            />
             <span className="text-xl font-bold">
               Dom<span className="text-gradient">Forge</span>AI
             </span>
@@ -812,7 +920,7 @@ const Dashboard = () => {
             <Button
               variant="hero"
               size="lg"
-              onClick={() => checkCreditsAndProceed('newProject')}
+              onClick={() => checkCreditsAndProceed("newProject")}
               disabled={isCheckingCredits}
               className="shrink-0"
             >
@@ -941,17 +1049,27 @@ const Dashboard = () => {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      onClick={() => window.open("https://structurizr.com/dsl", "_blank")}
+                      onClick={() =>
+                        window.open("https://structurizr.com/dsl", "_blank")
+                      }
                     >
                       <Layers className="w-4 h-4" />
                       C4 Editor
                       <ExternalLink className="w-3 h-3" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs text-center">
-                    <p className="font-medium mb-1">C4 Architecture Visualizer</p>
+                  <TooltipContent
+                    side="bottom"
+                    className="max-w-xs text-center"
+                  >
+                    <p className="font-medium mb-1">
+                      C4 Architecture Visualizer
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Use this tool to visualize your system architecture. Copy the C4 DSL content from your downloaded package and paste it into the Structurizr editor to generate interactive architecture diagrams.
+                      Use this tool to visualize your system architecture. Copy
+                      the C4 DSL content from your downloaded package and paste
+                      it into the Structurizr editor to generate interactive
+                      architecture diagrams.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -962,17 +1080,27 @@ const Dashboard = () => {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      onClick={() => window.open("https://dbdiagram.io/d", "_blank")}
+                      onClick={() =>
+                        window.open("https://dbdiagram.io/d", "_blank")
+                      }
                     >
                       <Database className="w-4 h-4" />
                       DBML Editor
                       <ExternalLink className="w-3 h-3" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs text-center">
-                    <p className="font-medium mb-1">Database Schema Visualizer</p>
+                  <TooltipContent
+                    side="bottom"
+                    className="max-w-xs text-center"
+                  >
+                    <p className="font-medium mb-1">
+                      Database Schema Visualizer
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Use this tool to visualize your database design. Copy the DBML content from each microservice's package and paste it into dbdiagram.io to generate entity-relationship diagrams.
+                      Use this tool to visualize your database design. Copy the
+                      DBML content from each microservice's package and paste it
+                      into dbdiagram.io to generate entity-relationship
+                      diagrams.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -983,17 +1111,25 @@ const Dashboard = () => {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      onClick={() => window.open("https://editor.swagger.io/", "_blank")}
+                      onClick={() =>
+                        window.open("https://editor.swagger.io/", "_blank")
+                      }
                     >
                       <FileCode className="w-4 h-4" />
                       OpenAPI Editor
                       <ExternalLink className="w-3 h-3" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs text-center">
+                  <TooltipContent
+                    side="bottom"
+                    className="max-w-xs text-center"
+                  >
                     <p className="font-medium mb-1">REST API Visualizer</p>
                     <p className="text-xs text-muted-foreground">
-                      Use this tool to visualize your API specifications. Copy the OpenAPI YAML content from each microservice's package and paste it into Swagger Editor to explore endpoints, schemas, and test API calls.
+                      Use this tool to visualize your API specifications. Copy
+                      the OpenAPI YAML content from each microservice's package
+                      and paste it into Swagger Editor to explore endpoints,
+                      schemas, and test API calls.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -1005,28 +1141,36 @@ const Dashboard = () => {
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-              ) : (() => {
-                const filtered = completedSessions.filter((session) =>
-                  session.projectName?.toLowerCase().includes(searchFilter.toLowerCase())
-                );
-                return filtered.length === 0 ? (
-                  searchFilter ? (
-                    <div className="bg-card/50 border border-border/50 rounded-2xl p-12 text-center">
-                      <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                      <h3 className="text-lg font-medium mb-2">No results found</h3>
-                      <p className="text-muted-foreground">No projects match "{searchFilter}"</p>
-                    </div>
+              ) : (
+                (() => {
+                  const filtered = completedSessions.filter((session) =>
+                    session.projectName
+                      ?.toLowerCase()
+                      .includes(searchFilter.toLowerCase())
+                  );
+                  return filtered.length === 0 ? (
+                    searchFilter ? (
+                      <div className="bg-card/50 border border-border/50 rounded-2xl p-12 text-center">
+                        <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                        <h3 className="text-lg font-medium mb-2">
+                          No results found
+                        </h3>
+                        <p className="text-muted-foreground">
+                          No projects match "{searchFilter}"
+                        </p>
+                      </div>
+                    ) : (
+                      renderEmptyState("No completed projects yet")
+                    )
                   ) : (
-                    renderEmptyState("No completed projects yet")
-                  )
-                ) : (
-                  <div className="grid gap-4">
-                    {filtered.map((session) =>
-                      renderSessionCard(session, true)
-                    )}
-                  </div>
-                );
-              })()}
+                    <div className="grid gap-4">
+                      {filtered.map((session) =>
+                        renderSessionCard(session, true)
+                      )}
+                    </div>
+                  );
+                })()
+              )}
             </TabsContent>
 
             <TabsContent value="in-analyze" className="space-y-4">
@@ -1034,28 +1178,36 @@ const Dashboard = () => {
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-              ) : (() => {
-                const filtered = inAnalyzeSessions.filter((session) =>
-                  session.projectName?.toLowerCase().includes(searchFilter.toLowerCase())
-                );
-                return filtered.length === 0 ? (
-                  searchFilter ? (
-                    <div className="bg-card/50 border border-border/50 rounded-2xl p-12 text-center">
-                      <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                      <h3 className="text-lg font-medium mb-2">No results found</h3>
-                      <p className="text-muted-foreground">No projects match "{searchFilter}"</p>
-                    </div>
+              ) : (
+                (() => {
+                  const filtered = inAnalyzeSessions.filter((session) =>
+                    session.projectName
+                      ?.toLowerCase()
+                      .includes(searchFilter.toLowerCase())
+                  );
+                  return filtered.length === 0 ? (
+                    searchFilter ? (
+                      <div className="bg-card/50 border border-border/50 rounded-2xl p-12 text-center">
+                        <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                        <h3 className="text-lg font-medium mb-2">
+                          No results found
+                        </h3>
+                        <p className="text-muted-foreground">
+                          No projects match "{searchFilter}"
+                        </p>
+                      </div>
+                    ) : (
+                      renderEmptyState("No projects in analysis")
+                    )
                   ) : (
-                    renderEmptyState("No projects in analysis")
-                  )
-                ) : (
-                  <div className="grid gap-4">
-                    {filtered.map((session) =>
-                      renderSessionCard(session, false)
-                    )}
-                  </div>
-                );
-              })()}
+                    <div className="grid gap-4">
+                      {filtered.map((session) =>
+                        renderSessionCard(session, false)
+                      )}
+                    </div>
+                  );
+                })()
+              )}
             </TabsContent>
           </Tabs>
         </motion.div>
@@ -1067,7 +1219,10 @@ const Dashboard = () => {
       />
 
       {/* Insufficient Credits Dialog */}
-      <Dialog open={showInsufficientCreditsDialog} onOpenChange={setShowInsufficientCreditsDialog}>
+      <Dialog
+        open={showInsufficientCreditsDialog}
+        onOpenChange={setShowInsufficientCreditsDialog}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1078,11 +1233,13 @@ const Dashboard = () => {
               You need more than 2 credits to perform this action.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="py-4 space-y-4">
             <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30">
               <p className="text-sm text-muted-foreground">
-                Your current credit balance is too low. Upgrade your subscription or purchase a credit pack to continue using DomForgeAI.
+                Your current credit balance is too low. Upgrade your
+                subscription or purchase a credit pack to continue using
+                DomForgeAI.
               </p>
             </div>
           </div>
@@ -1129,7 +1286,9 @@ const Dashboard = () => {
             {isLoadingAnalysis ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <span className="ml-3 text-muted-foreground">Loading analysis...</span>
+                <span className="ml-3 text-muted-foreground">
+                  Loading analysis...
+                </span>
               </div>
             ) : analysisData?.domainAnalysis || analysisData?.analysis ? (
               <DomainAnalysisPanel
@@ -1146,7 +1305,10 @@ const Dashboard = () => {
           </ScrollArea>
 
           <DialogFooter className="flex-shrink-0">
-            <Button variant="outline" onClick={() => setShowAnalysisDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowAnalysisDialog(false)}
+            >
               Close
             </Button>
           </DialogFooter>
