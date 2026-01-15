@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Linkedin, MessageCircle } from "lucide-react";
+import { Linkedin, MessageCircle, Twitter } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 
 const footerLinks = {
@@ -43,6 +43,14 @@ export const Footer = () => {
                 className="text-muted-foreground hover:text-primary transition-colors"
               >
                 <MessageCircle className="w-5 h-5" />
+              </a>
+              <a
+                href="https://x.com/DomForgeAI"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Twitter className="w-5 h-5" />
               </a>
               <a
                 href="https://www.linkedin.com/company/domfrogeai"
