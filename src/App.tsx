@@ -16,6 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import Questionnaire from "./pages/Questionnaire";
 import GenerationStatus from "./pages/GenerationStatus";
 import MyPlan from "./pages/MyPlan";
+import Feedback from "./pages/Feedback";
 import ErrorPage from "./pages/ErrorPage";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/project/:sessionId/questionnaire" element={<ProtectedRoute><Questionnaire /></ProtectedRoute>} />
             <Route path="/project/:sessionId/status" element={<ProtectedRoute><GenerationStatus /></ProtectedRoute>} />
             <Route path="/my-plan" element={<ProtectedRoute><MyPlan /></ProtectedRoute>} />
+            <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
