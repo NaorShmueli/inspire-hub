@@ -60,7 +60,7 @@ import type {
   RoundAnalysisModel,
   DomainAnalysisResult,
 } from "@/lib/api-types";
-import { FeedbackDialog } from "@/components/FeedbackDialog";
+
 import { DomainAnalysisPanel } from "@/components/DomainAnalysisPanel";
 import logo from "@/assets/logo.jpg";
 
@@ -80,7 +80,7 @@ const Dashboard = () => {
     ConversationSession[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  
   const [showInsufficientCreditsDialog, setShowInsufficientCreditsDialog] =
     useState(false);
   const [pendingAction, setPendingAction] = useState<{
@@ -877,7 +877,7 @@ const Dashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowFeedbackDialog(true)}
+              onClick={() => navigate("/feedback")}
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               Feedback
@@ -1213,10 +1213,6 @@ const Dashboard = () => {
         </motion.div>
       </main>
 
-      <FeedbackDialog
-        open={showFeedbackDialog}
-        onOpenChange={setShowFeedbackDialog}
-      />
 
       {/* Insufficient Credits Dialog */}
       <Dialog
