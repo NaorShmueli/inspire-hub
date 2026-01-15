@@ -11,6 +11,7 @@ import {
   Clock,
   ArrowRight,
   RefreshCw,
+  Hourglass,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -112,6 +113,7 @@ const GenerationStatus = () => {
 
   const isComplete = status?.currentPhase === "completed";
   const isFailed = status?.currentPhase === "failed";
+  const isQueued = status?.currentPhase === "queued";
   const isGenerating = status?.currentPhase === "generating_packages";
 
   return (
@@ -153,18 +155,24 @@ const GenerationStatus = () => {
                     ? "bg-green-500/10 border-2 border-green-500" 
                     : isFailed 
                     ? "bg-destructive/10 border-2 border-destructive"
+                    : isQueued
+                    ? "bg-amber-500/10 border-2 border-amber-500"
                     : "bg-primary/10 border-2 border-primary"
                 }`}>
                   {isComplete ? (
                     <CheckCircle2 className="w-12 h-12 text-green-500" />
                   ) : isFailed ? (
                     <AlertCircle className="w-12 h-12 text-destructive" />
+                  ) : isQueued ? (
+                    <Hourglass className="w-12 h-12 text-amber-500 animate-pulse" />
                   ) : (
                     <Loader2 className="w-12 h-12 text-primary animate-spin" />
                   )}
                 </div>
-                {isGenerating && (
-                  <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
+                {(isGenerating || isQueued) && (
+                  <div className={`absolute inset-0 rounded-full border-2 animate-ping ${
+                    isQueued ? "border-amber-500/30" : "border-primary/30"
+                  }`} />
                 )}
               </div>
 
@@ -175,6 +183,8 @@ const GenerationStatus = () => {
                     ? "Generation Complete!"
                     : isFailed
                     ? "Generation Failed"
+                    : isQueued
+                    ? "Queued for Generation"
                     : "Generating Your Architecture"}
                 </h1>
                 <p className="text-muted-foreground">
@@ -182,6 +192,8 @@ const GenerationStatus = () => {
                     ? "Your enterprise architecture packages are ready for download"
                     : isFailed
                     ? status?.errorMessage || "An error occurred during generation"
+                    : isQueued
+                    ? "Your request is in the queue. Generation will start shortly..."
                     : status?.currentPackage
                     ? `Currently generating: ${status.currentPackage}`
                     : "Analyzing requirements and generating packages..."}
