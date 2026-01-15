@@ -271,6 +271,23 @@ const parseAiAnalysisJson = (jsonString: string): RoundAnalysisModel | null => {
   }
 };
 
+// Helper to extract confidence score from analysis_summary (preferred) or round_metadata (fallback)
+const getConfidenceFromResponse = (response: RoundAnalysisModel): number => {
+  // Priority 1: analysis_summary.confidence_score from last_analysis_data
+  const analysisConfidence =
+    response.last_analysis_data?.analysis_summary?.confidence_score ??
+    (response.last_analysis_data as any)?.analysisSummary?.confidenceScore;
+  
+  if (typeof analysisConfidence === 'number' && analysisConfidence > 0) {
+    // If confidence is already a percentage (> 1), return as-is; otherwise multiply by 100
+    return analysisConfidence > 1 ? analysisConfidence : analysisConfidence * 100;
+  }
+  
+  // Fallback: round_metadata.confidence_score_after_expected
+  const metadataConfidence = response.round_metadata?.confidence_score_after_expected ?? 0;
+  return metadataConfidence * 100;
+};
+
 const Questionnaire = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const location = useLocation();
@@ -522,9 +539,7 @@ const Questionnaire = () => {
         });
 
         // Add the AI analysis summary after the Q&A with domain information
-        const roundConfidencePercent = Math.round(
-          (analysis.round_metadata?.confidence_score_after_expected || 0) * 100
-        );
+        const roundConfidencePercent = Math.round(getConfidenceFromResponse(analysis));
 
         let analysisContent = `Analysis complete. Confidence: ${roundConfidencePercent}%`;
 
@@ -870,9 +885,7 @@ const Questionnaire = () => {
       });
 
       setRoundAnalysis(response);
-      setConfidenceScore(
-        response.round_metadata.confidence_score_after_expected * 100
-      );
+      setConfidenceScore(getConfidenceFromResponse(response));
       setCurrentRound(response.roundNumber);
       setIsFoundationPhase(false);
       setFollowupQuestions(response.questions || []);
@@ -951,9 +964,7 @@ const Questionnaire = () => {
       );
 
       setRoundAnalysis(response);
-      setConfidenceScore(
-        response.round_metadata.confidence_score_after_expected * 100
-      );
+      setConfidenceScore(getConfidenceFromResponse(response));
 
       // Add analysis message
       const analysisMessage: ChatMessage = {
