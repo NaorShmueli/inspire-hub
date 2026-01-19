@@ -901,8 +901,8 @@ const Questionnaire = () => {
       const analysisMessage: ChatMessage = {
         id: `analysis-${response.roundNumber}`,
         type: "ai",
-        content: `I've analyzed your requirements. Current confidence: ${Math.round(
-          response.round_metadata.confidence_score_after_expected * 100
+        content: `I've analyzed your requirements. Current confidence: ${getConfidenceFromResponse(
+          response
         )}%. ${
           response.round_metadata.requires_another_round
             ? "I need a few more details to refine the architecture."
