@@ -16,7 +16,19 @@ import type {
   UserSubscriptionEntity,
   ContactSalesRequest,
   FeedbackRequest,
+  ProblemDetails,
 } from "./api-types";
+
+// Custom error class for API errors with ProblemDetails
+export class ApiError extends Error {
+  public problemDetails: ProblemDetails | null;
+
+  constructor(message: string, problemDetails: ProblemDetails | null = null) {
+    super(message);
+    this.name = "ApiError";
+    this.problemDetails = problemDetails;
+  }
+}
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL || "https://dom-froge-ai-api.com/api";
@@ -87,9 +99,21 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(
-        error.detail || error.title || `API Error: ${response.status}`
+      const errorData = await response.json().catch(() => ({}));
+      // Check if it's a ProblemDetails response
+      const problemDetails: ProblemDetails | null = errorData.title || errorData.detail
+        ? {
+            type: errorData.type || null,
+            title: errorData.title || null,
+            status: errorData.status || response.status,
+            detail: errorData.detail || null,
+            instance: errorData.instance || null,
+          }
+        : null;
+      
+      throw new ApiError(
+        errorData.detail || errorData.title || `API Error: ${response.status}`,
+        problemDetails
       );
     }
 
