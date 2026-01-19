@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, ApiError } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import type {
   FoundationQuestion,
@@ -939,12 +939,20 @@ const Questionnaire = () => {
       }
     } catch (error) {
       console.error("Failed to submit foundation:", error);
-      toast({
-        title: "Submission failed",
-        description:
-          error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
+      if (error instanceof ApiError && error.problemDetails) {
+        toast({
+          title: error.problemDetails.title || "Submission failed",
+          description: error.problemDetails.detail || "Please try again",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Submission failed",
+          description:
+            error instanceof Error ? error.message : "Please try again",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -1060,12 +1068,20 @@ const Questionnaire = () => {
       }
     } catch (error) {
       console.error("Failed to submit followup:", error);
-      toast({
-        title: "Submission failed",
-        description:
-          error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
+      if (error instanceof ApiError && error.problemDetails) {
+        toast({
+          title: error.problemDetails.title || "Submission failed",
+          description: error.problemDetails.detail || "Please try again",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Submission failed",
+          description:
+            error instanceof Error ? error.message : "Please try again",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -1093,12 +1109,20 @@ const Questionnaire = () => {
       navigate(`/project/${sessionId}/status`);
     } catch (error) {
       console.error("Failed to approve domain:", error);
-      toast({
-        title: "Approval failed",
-        description:
-          error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
+      if (error instanceof ApiError && error.problemDetails) {
+        toast({
+          title: error.problemDetails.title || "Approval failed",
+          description: error.problemDetails.detail || "Please try again",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Approval failed",
+          description:
+            error instanceof Error ? error.message : "Please try again",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

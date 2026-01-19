@@ -49,7 +49,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, ApiError } from "@/lib/api-client";
 import {
   cacheFoundationQuestions,
   getCachedFoundationQuestions,
@@ -190,12 +190,20 @@ const Dashboard = () => {
       });
     } catch (error) {
       console.error("Failed to create project:", error);
-      toast({
-        title: "Failed to create project",
-        description:
-          error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
+      if (error instanceof ApiError && error.problemDetails) {
+        toast({
+          title: error.problemDetails.title || "Failed to create project",
+          description: error.problemDetails.detail || "Please try again",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Failed to create project",
+          description:
+            error instanceof Error ? error.message : "Please try again",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsCreating(false);
     }
