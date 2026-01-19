@@ -40,11 +40,16 @@ const Pricing = () => {
     const fetchPlans = async () => {
       try {
         const result = await apiClient.getPlans();
-        if (result.data && Array.isArray(result.data)) {
-          setPlans(result.data.filter((p) => p.active));
-        } else if (result.data) {
-          // Handle single plan response
-          setPlans([result.data as unknown as PlanEntity]);
+        console.log("Plans API response:", result);
+        
+        if (result.data) {
+          // Handle both array and single plan responses
+          const plansArray = Array.isArray(result.data) 
+            ? result.data 
+            : [result.data];
+          setPlans(plansArray.filter((p) => p.active));
+        } else {
+          console.warn("No plans data in response:", result);
         }
       } catch (error) {
         console.error("Failed to fetch plans:", error);

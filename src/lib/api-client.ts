@@ -245,9 +245,9 @@ class ApiClient {
     });
   }
 
-  // Plans endpoints
-  async getPlans(): Promise<StrategyResult<PlanEntity[]>> {
-    return this.request<StrategyResult<PlanEntity[]>>("/Plans/details");
+  // Plans endpoints - returns single plan or array based on API response
+  async getPlans(): Promise<StrategyResult<PlanEntity | PlanEntity[]>> {
+    return this.request<StrategyResult<PlanEntity | PlanEntity[]>>("/Plans/details");
   }
 
   async getUserPlan(userId: number): Promise<UserSubscriptionEntity> {
