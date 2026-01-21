@@ -1,0 +1,53 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: domforgeai-ingress
+  namespace: dom-froge-ai
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:il-central-1:797525201856:certificate/6cf2df19-edf1-4af6-984a-859bab444411
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/healthcheck-path: /api/health/live
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/success-codes: '200,404'
+    # Manually specify subnets (your public subnets)
+    alb.ingress.kubernetes.io/subnets: subnet-01f5299a67b054602,subnet-023f9e157ee3baddc
+spec:
+  ingressClassName: alb
+  rules:
+  - host: domforgeai.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: dom-froge-ai-service
+            port:
+              number: 8098
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dom-froge-ai-react-app
+            port:
+              number: 8099
+  - host: www.domforgeai.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: dom-froge-ai-service
+            port:
+              number: 8098
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dom-froge-ai-react-app
+            port:
+              number: 8099

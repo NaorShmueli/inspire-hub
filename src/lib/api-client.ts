@@ -30,8 +30,8 @@ export class ApiError extends Error {
   }
 }
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://dom-froge-ai-api.com/api";
+export const API_BASE_URL = "https://domforgeai.com/api";
+//import.meta.env.VITE_API_URL || "https://dom-froge-ai-api.com/api";
 
 class ApiClient {
   private accessToken: string | null = null;
@@ -62,7 +62,7 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -70,9 +70,8 @@ class ApiClient {
     };
 
     if (this.accessToken) {
-      (headers as Record<string, string>)[
-        "Authorization"
-      ] = `Bearer ${this.accessToken}`;
+      (headers as Record<string, string>)["Authorization"] =
+        `Bearer ${this.accessToken}`;
     }
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -84,9 +83,8 @@ class ApiClient {
       // Try to refresh token
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
-        (headers as Record<string, string>)[
-          "Authorization"
-        ] = `Bearer ${this.accessToken}`;
+        (headers as Record<string, string>)["Authorization"] =
+          `Bearer ${this.accessToken}`;
         const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
           ...options,
           headers,
@@ -101,19 +99,20 @@ class ApiClient {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       // Check if it's a ProblemDetails response
-      const problemDetails: ProblemDetails | null = errorData.title || errorData.detail
-        ? {
-            type: errorData.type || null,
-            title: errorData.title || null,
-            status: errorData.status || response.status,
-            detail: errorData.detail || null,
-            instance: errorData.instance || null,
-          }
-        : null;
-      
+      const problemDetails: ProblemDetails | null =
+        errorData.title || errorData.detail
+          ? {
+              type: errorData.type || null,
+              title: errorData.title || null,
+              status: errorData.status || response.status,
+              detail: errorData.detail || null,
+              instance: errorData.instance || null,
+            }
+          : null;
+
       throw new ApiError(
         errorData.detail || errorData.title || `API Error: ${response.status}`,
-        problemDetails
+        problemDetails,
       );
     }
 
@@ -189,28 +188,28 @@ class ApiClient {
 
   async submitCoreAnswers(
     sessionId: number,
-    data: SubmitAnswersRequest
+    data: SubmitAnswersRequest,
   ): Promise<RoundAnalysisModel> {
     return this.request<RoundAnalysisModel>(
       `/conversation/${sessionId}/core-answers`,
       {
         method: "POST",
         body: JSON.stringify(data),
-      }
+      },
     );
   }
 
   async submitFollowupAnswers(
     sessionId: number,
     roundNumber: number,
-    data: SubmitAnswersRequest
+    data: SubmitAnswersRequest,
   ): Promise<RoundAnalysisModel> {
     return this.request<RoundAnalysisModel>(
       `/conversation/${sessionId}/followup-answers/${roundNumber}`,
       {
         method: "POST",
         body: JSON.stringify(data),
-      }
+      },
     );
   }
 
@@ -222,14 +221,14 @@ class ApiClient {
 
   async getSessionStatus(sessionId: number): Promise<GenerationStatusResponse> {
     return this.request<GenerationStatusResponse>(
-      `/conversation/${sessionId}/status`
+      `/conversation/${sessionId}/status`,
     );
   }
 
   // Get sessions by status (completed or In analyze)
   async getSessionsByStatus(status: string): Promise<ConversationSession[]> {
     return this.request<ConversationSession[]>(
-      `/conversation/all/by/${status}`
+      `/conversation/all/by/${status}`,
     );
   }
 
@@ -256,20 +255,20 @@ class ApiClient {
 
   async getCreditPacks(): Promise<StrategyResult<CreditPackEntity[]>> {
     return this.request<StrategyResult<CreditPackEntity[]>>(
-      "/Plans/creditPacks"
+      "/Plans/creditPacks",
     );
   }
 
   // Subscription endpoints
   async subscribe(
-    data: SubscribeRequest
+    data: SubscribeRequest,
   ): Promise<{ sessionId: string; checkoutUrl: string }> {
     return this.request<{ sessionId: string; checkoutUrl: string }>(
       "/StripeSubscription/subscribe",
       {
         method: "POST",
         body: JSON.stringify(data),
-      }
+      },
     );
   }
 
@@ -281,14 +280,14 @@ class ApiClient {
   }
 
   async buyCreditPack(
-    data: CreditPackRequest
+    data: CreditPackRequest,
   ): Promise<{ sessionId: string; checkoutUrl: string }> {
     return this.request<{ sessionId: string; checkoutUrl: string }>(
       "/StripeSubscription/buy/pack",
       {
         method: "POST",
         body: JSON.stringify(data),
-      }
+      },
     );
   }
 
@@ -304,7 +303,7 @@ class ApiClient {
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
         },
-      }
+      },
     );
     if (!response.ok) {
       throw new Error("Failed to download project");

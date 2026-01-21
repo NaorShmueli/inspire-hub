@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dom-froge-ai-react-app
+  namespace: dom-froge-ai   
+  labels:
+    app: dom-froge-ai-react-app
+spec:
+  replicas: 2  # Scale to 2 as planned
+  selector:
+    matchLabels:
+      app: dom-froge-ai-react-app
+  template:
+    metadata:
+      labels:
+        app: dom-froge-ai-react-app
+    spec:
+      containers:
+        - name: dom-froge-ai-react-app
+          image: 797525201856.dkr.ecr.il-central-1.amazonaws.com/domforgeai/react:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
