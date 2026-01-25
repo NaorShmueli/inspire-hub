@@ -63,6 +63,11 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {},
   ): Promise<Blob> {
+    // Ensure tokens are loaded from localStorage
+    if (!this.accessToken) {
+      this.loadTokens();
+    }
+
     const headers: HeadersInit = {
       ...options.headers,
     };
