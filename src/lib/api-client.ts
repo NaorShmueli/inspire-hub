@@ -59,6 +59,48 @@ class ApiClient {
   isAuthenticated(): boolean {
     return !!this.accessToken;
   }
+  private async requestBlob(
+    endpoint: string,
+    options: RequestInit = {},
+  ): Promise<Blob> {
+    const headers: HeadersInit = {
+      ...options.headers,
+    };
+
+    if (this.accessToken) {
+      (headers as Record<string, string>)["Authorization"] =
+        `Bearer ${this.accessToken}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    if (response.status === 401 && this.refreshToken) {
+      const refreshed = await this.refreshAccessToken();
+      if (refreshed) {
+        (headers as Record<string, string>)["Authorization"] =
+          `Bearer ${this.accessToken}`;
+        const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
+          ...options,
+          headers,
+        });
+
+        if (!retryResponse.ok) {
+          throw new Error(`API Error: ${retryResponse.status}`);
+        }
+
+        return retryResponse.blob();
+      }
+    }
+
+    if (!response.ok) {
+      throw new Error(`Failed to download file (${response.status})`);
+    }
+
+    return response.blob();
+  }
 
   private async request<T>(
     endpoint: string,
@@ -246,7 +288,9 @@ class ApiClient {
 
   // Plans endpoints - returns single plan or array based on API response
   async getPlans(): Promise<StrategyResult<PlanEntity | PlanEntity[]>> {
-    return this.request<StrategyResult<PlanEntity | PlanEntity[]>>("/Plans/details");
+    return this.request<StrategyResult<PlanEntity | PlanEntity[]>>(
+      "/Plans/details",
+    );
   }
 
   async getUserPlan(userId: number): Promise<UserSubscriptionEntity> {
@@ -297,18 +341,9 @@ class ApiClient {
   }
 
   async downloadProject(sessionId: number): Promise<Blob> {
-    const response = await fetch(
-      `${API_BASE_URL}/system/download/session/${sessionId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-      },
-    );
-    if (!response.ok) {
-      throw new Error("Failed to download project");
-    }
-    return response.blob();
+    return this.requestBlob(`/system/download/session/${sessionId}`, {
+      method: "GET",
+    });
   }
 
   // User Inputs endpoints

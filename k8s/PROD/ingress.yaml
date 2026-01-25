@@ -4,12 +4,13 @@ metadata:
   name: domforgeai-ingress
   namespace: dom-froge-ai
   annotations:
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:il-central-1:797525201856:certificate/6cf2df19-edf1-4af6-984a-859bab444411
     alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/healthcheck-path: /api/health/live
+    alb.ingress.kubernetes.io/healthcheck-path: /health/live
     alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
     alb.ingress.kubernetes.io/success-codes: '200,404'
     # Manually specify subnets (your public subnets)

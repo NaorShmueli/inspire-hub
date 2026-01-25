@@ -1,0 +1,94 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: domforgeai-ingress
+  namespace: domforgeai-prod
+  annotations:
+    # ALB Configuration
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:il-central-1:797525201856:certificate/6cf2df19-edf1-4af6-984a-859bab444411
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    
+    # CRITICAL FOR WEBHOOKS: Fast deregistration
+    alb.ingress.kubernetes.io/target-group-attributes: |
+      deregistration_delay.timeout_seconds=10,
+      stickiness.enabled=false,
+      stickiness.type=lb_cookie
+    
+    # CRITICAL FOR WEBHOOKS: Optimized health checks
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/success-codes: '200'
+    
+    # Your subnets
+    alb.ingress.kubernetes.io/subnets: subnet-01f5299a67b054602,subnet-023f9e157ee3baddc
+    
+    # OPTIONAL BUT RECOMMENDED: Enable access logs for debugging
+    # alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled=true,access_logs.s3.bucket=your-bucket-name
+    
+    # Tags for cost tracking
+    alb.ingress.kubernetes.io/tags: Environment=production,Application=domforgeai
+    
+spec:
+  ingressClassName: alb
+  rules:
+  - host: domforgeai.com
+    http:
+      paths:
+      # CRITICAL: Stripe webhook endpoint should be FIRST for fastest routing
+      - path: /api/webhooks/stripe
+        pathType: Exact  # Use Exact for webhooks, not Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80
+      
+      # Then other API paths
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80
+      
+      # React UI last
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: react-ui-service
+            port:
+              number: 80
+  
+  - host: www.domforgeai.com
+    http:
+      paths:
+      - path: /api/webhooks/stripe
+        pathType: Exact
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: react-ui-service
+            port:
+              number: 80
