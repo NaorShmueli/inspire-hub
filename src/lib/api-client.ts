@@ -35,29 +35,42 @@ export const API_BASE_URL = "https://domforgeai.com/api";
 
 class ApiClient {
   private accessToken: string | null = null;
-  private refreshToken: string | null = null;
+  private tokenExpiration: Date | null = null;
 
-  setTokens(accessToken: string, refreshToken?: string) {
+  setTokens(accessToken: string, expirationTime?: string | Date) {
     this.accessToken = accessToken;
-    if (refreshToken) this.refreshToken = refreshToken;
+    if (expirationTime) {
+      this.tokenExpiration = new Date(expirationTime);
+      localStorage.setItem("token_expiration", this.tokenExpiration.toISOString());
+    }
     localStorage.setItem("access_token", accessToken);
-    if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
   }
 
   clearTokens() {
     this.accessToken = null;
-    this.refreshToken = null;
+    this.tokenExpiration = null;
     localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("token_expiration");
   }
 
   loadTokens() {
     this.accessToken = localStorage.getItem("access_token");
-    this.refreshToken = localStorage.getItem("refresh_token");
+    const expiration = localStorage.getItem("token_expiration");
+    if (expiration) {
+      this.tokenExpiration = new Date(expiration);
+    }
   }
 
   isAuthenticated(): boolean {
     return !!this.accessToken;
+  }
+
+  // Check if token is expired or about to expire (within 1 minute)
+  isTokenExpired(): boolean {
+    if (!this.tokenExpiration) return false;
+    const now = new Date();
+    const bufferMs = 60 * 1000; // 1 minute buffer
+    return now.getTime() >= this.tokenExpiration.getTime() - bufferMs;
   }
   private async requestBlob(
     endpoint: string,
@@ -66,6 +79,11 @@ class ApiClient {
     // Ensure tokens are loaded from localStorage
     if (!this.accessToken) {
       this.loadTokens();
+    }
+
+    // Proactively refresh if token is expired
+    if (this.isTokenExpired()) {
+      await this.refreshAccessToken();
     }
 
     const headers: HeadersInit = {
@@ -80,9 +98,10 @@ class ApiClient {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers,
+      credentials: "include", // Important: send cookies for refresh token
     });
 
-    if (response.status === 401 && this.refreshToken) {
+    if (response.status === 401) {
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
         (headers as Record<string, string>)["Authorization"] =
@@ -90,6 +109,7 @@ class ApiClient {
         const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
           ...options,
           headers,
+          credentials: "include",
         });
 
         if (!retryResponse.ok) {
@@ -111,6 +131,16 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {},
   ): Promise<T> {
+    // Ensure tokens are loaded
+    if (!this.accessToken) {
+      this.loadTokens();
+    }
+
+    // Proactively refresh if token is expired
+    if (this.isTokenExpired()) {
+      await this.refreshAccessToken();
+    }
+
     const headers: HeadersInit = {
       "Content-Type": "application/json",
       ...options.headers,
@@ -124,10 +154,11 @@ class ApiClient {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers,
+      credentials: "include", // Important: send cookies for refresh token
     });
 
-    if (response.status === 401 && this.refreshToken) {
-      // Try to refresh token
+    if (response.status === 401) {
+      // Try to refresh token using HttpOnly cookie
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
         (headers as Record<string, string>)["Authorization"] =
@@ -135,6 +166,7 @@ class ApiClient {
         const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
           ...options,
           headers,
+          credentials: "include",
         });
         if (!retryResponse.ok) {
           throw new Error(`API Error: ${retryResponse.status}`);
@@ -187,17 +219,18 @@ class ApiClient {
 
   private async refreshAccessToken(): Promise<boolean> {
     try {
+      // Refresh token is sent automatically via HttpOnly cookie
       const response = await fetch(`${API_BASE_URL}/Token/refresh`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.refreshToken}`,
         },
+        credentials: "include", // This sends the HttpOnly refresh_token cookie
       });
       if (response.ok) {
         const data: StrategyResult<JwtResponse> = await response.json();
         if (data.data?.accessToken) {
-          this.setTokens(data.data.accessToken);
+          this.setTokens(data.data.accessToken, data.data.expirationTime);
           return true;
         }
       }

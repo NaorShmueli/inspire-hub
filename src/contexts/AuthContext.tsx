@@ -54,7 +54,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const result = await apiClient.createToken(userId);
         if (result.data?.accessToken) {
-          apiClient.setTokens(result.data.accessToken);
+          // Store token with expiration time
+          apiClient.setTokens(result.data.accessToken, result.data.expirationTime);
           // Use name and email from URL params if available
           const newUser: User = {
             id: userId,
