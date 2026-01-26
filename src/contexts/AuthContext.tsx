@@ -28,13 +28,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load tokens and user on mount
-    apiClient.loadTokens();
-    const storedUser = localStorage.getItem("user");
-    if (storedUser && apiClient.isAuthenticated()) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const initAuth = async () => {
+      apiClient.loadTokens();
+      const storedUser = localStorage.getItem("user");
+
+      if (storedUser) {
+        // If we have a stored user but no valid access token, try to refresh
+        if (!apiClient.isAuthenticated() || apiClient.isTokenExpired()) {
+          const refreshed = await apiClient.tryRefreshToken();
+          if (refreshed) {
+            setUser(JSON.parse(storedUser));
+          } else {
+            // Refresh failed, clear stored user
+            localStorage.removeItem("user");
+          }
+        } else {
+          // Token is valid
+          setUser(JSON.parse(storedUser));
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initAuth();
   }, []);
 
   const login = useCallback(() => {

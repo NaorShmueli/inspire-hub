@@ -217,6 +217,11 @@ class ApiClient {
     return JSON.parse(text) as T;
   }
 
+  // Public method to attempt token refresh (used on app mount)
+  async tryRefreshToken(): Promise<boolean> {
+    return this.refreshAccessToken();
+  }
+
   private async refreshAccessToken(): Promise<boolean> {
     try {
       // Refresh token is sent automatically via HttpOnly cookie
