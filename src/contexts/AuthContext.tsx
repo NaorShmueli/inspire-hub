@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Initial auth check on mount
   useEffect(() => {
     const initAuth = async () => {
       apiClient.loadTokens();
@@ -52,6 +53,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initAuth();
   }, []);
+
+  // Background token refresh - checks every 30 seconds
+  useEffect(() => {
+    if (!user) return;
+
+    const checkAndRefreshToken = async () => {
+      apiClient.loadTokens();
+      if (apiClient.isTokenExpired()) {
+        console.log("[Auth] Token expired, refreshing...");
+        const refreshed = await apiClient.tryRefreshToken();
+        if (!refreshed) {
+          // Refresh failed, log out user
+          console.log("[Auth] Token refresh failed, logging out");
+          localStorage.removeItem("user");
+          setUser(null);
+        }
+      }
+    };
+
+    // Check every 30 seconds
+    const intervalId = setInterval(checkAndRefreshToken, 30 * 1000);
+
+    // Also check immediately when user navigates (focus event)
+    const handleFocus = () => {
+      checkAndRefreshToken();
+    };
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [user]);
 
   const login = useCallback(() => {
     // Redirect to Google OAuth
