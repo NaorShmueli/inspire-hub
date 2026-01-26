@@ -33,6 +33,18 @@ export class ApiError extends Error {
 export const API_BASE_URL = "https://domforgeai.com/api";
 //import.meta.env.VITE_API_URL || "https://dom-froge-ai-api.com/api";
 
+// Cache keys and TTL (24 hours for rarely-changing config data)
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_KEYS = {
+  PLANS: "cached_plans",
+  CREDIT_PACKS: "cached_credit_packs",
+} as const;
+
+interface CachedData<T> {
+  data: T;
+  timestamp: number;
+}
+
 class ApiClient {
   private accessToken: string | null = null;
   private tokenExpiration: Date | null = null;
@@ -51,6 +63,40 @@ class ApiClient {
     this.tokenExpiration = null;
     localStorage.removeItem("access_token");
     localStorage.removeItem("token_expiration");
+  }
+
+  // Cache helpers
+  private getFromCache<T>(key: string): T | null {
+    try {
+      const cached = localStorage.getItem(key);
+      if (!cached) return null;
+      
+      const parsed: CachedData<T> = JSON.parse(cached);
+      const now = Date.now();
+      
+      if (now - parsed.timestamp > CACHE_TTL_MS) {
+        localStorage.removeItem(key);
+        return null;
+      }
+      
+      return parsed.data;
+    } catch {
+      localStorage.removeItem(key);
+      return null;
+    }
+  }
+
+  private setToCache<T>(key: string, data: T): void {
+    const cached: CachedData<T> = {
+      data,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(key, JSON.stringify(cached));
+  }
+
+  private clearCache(): void {
+    localStorage.removeItem(CACHE_KEYS.PLANS);
+    localStorage.removeItem(CACHE_KEYS.CREDIT_PACKS);
   }
 
   loadTokens() {
@@ -268,8 +314,9 @@ class ApiClient {
     } catch (error) {
       console.error("Logout API call failed:", error);
     }
-    // Always clear local tokens regardless of API response
+    // Always clear local tokens and cache regardless of API response
     this.clearTokens();
+    this.clearCache();
   }
 
   // Credit balance endpoint
@@ -343,21 +390,32 @@ class ApiClient {
     });
   }
 
-  // Plans endpoints - returns single plan or array based on API response
+  // Plans endpoints - returns single plan or array based on API response (cached 24h)
   async getPlans(): Promise<StrategyResult<PlanEntity | PlanEntity[]>> {
-    return this.request<StrategyResult<PlanEntity | PlanEntity[]>>(
+    const cached = this.getFromCache<StrategyResult<PlanEntity | PlanEntity[]>>(CACHE_KEYS.PLANS);
+    if (cached) return cached;
+
+    const result = await this.request<StrategyResult<PlanEntity | PlanEntity[]>>(
       "/Plans/details",
     );
+    this.setToCache(CACHE_KEYS.PLANS, result);
+    return result;
   }
 
   async getUserPlan(userId: number): Promise<UserSubscriptionEntity> {
     return this.request<UserSubscriptionEntity>(`/Plans/user/plan/${userId}`);
   }
 
+  // Credit packs endpoint (cached 24h)
   async getCreditPacks(): Promise<StrategyResult<CreditPackEntity[]>> {
-    return this.request<StrategyResult<CreditPackEntity[]>>(
+    const cached = this.getFromCache<StrategyResult<CreditPackEntity[]>>(CACHE_KEYS.CREDIT_PACKS);
+    if (cached) return cached;
+
+    const result = await this.request<StrategyResult<CreditPackEntity[]>>(
       "/Plans/creditPacks",
     );
+    this.setToCache(CACHE_KEYS.CREDIT_PACKS, result);
+    return result;
   }
 
   // Subscription endpoints
