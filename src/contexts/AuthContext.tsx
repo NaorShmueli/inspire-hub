@@ -58,8 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = apiClient.getGoogleLoginUrl();
   }, []);
 
-  const logout = useCallback(() => {
-    apiClient.clearTokens();
+  const logout = useCallback(async () => {
+    await apiClient.logout(); // Calls /api/Token/logout to clear server-side cookie
     localStorage.removeItem("user");
     setUser(null);
   }, []);
