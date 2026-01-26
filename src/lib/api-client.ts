@@ -258,6 +258,20 @@ class ApiClient {
     });
   }
 
+  // Logout - clears refresh token cookie on server
+  async logout(): Promise<void> {
+    try {
+      await fetch(`${API_BASE_URL}/Token/logout`, {
+        method: "POST",
+        credentials: "include", // Send the HttpOnly refresh_token cookie
+      });
+    } catch (error) {
+      console.error("Logout API call failed:", error);
+    }
+    // Always clear local tokens regardless of API response
+    this.clearTokens();
+  }
+
   // Credit balance endpoint
   async getCreditBalance(): Promise<UserCreditsEntity> {
     return this.request<UserCreditsEntity>("/conversation/credit/balance");
