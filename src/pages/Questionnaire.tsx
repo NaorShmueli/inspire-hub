@@ -1339,7 +1339,7 @@ const Questionnaire = () => {
         {/* Input Area */}
         {!showDomainApproval && (
           <div className="border-t border-border/50 py-4">
-            <div className="flex flex-col gap-3">
+            <div className="flex gap-3 items-end">
               <textarea
                 ref={inputRef}
                 value={inputValue}
@@ -1351,24 +1351,22 @@ const Questionnaire = () => {
                     : "Type your answer and press Enter..."
                 }
                 disabled={isSubmitting}
-                className="w-full h-[120px] px-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none"
+                className="flex-1 px-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none !h-[120px]"
                 rows={4}
               />
-              <div className="flex justify-end">
-                <Button
-                  variant="hero"
-                  size="icon"
-                  className="h-[52px] w-[52px]"
-                  onClick={handleSendMessage}
-                  disabled={isSubmitting || !inputValue.trim()}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5" />
-                  )}
-                </Button>
-              </div>
+              <Button
+                variant="hero"
+                size="icon"
+                className="h-[52px] w-[52px] flex-shrink-0"
+                onClick={handleSendMessage}
+                disabled={isSubmitting || !inputValue.trim()}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
+              </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
               Press Enter to send • Shift+Enter for new line
