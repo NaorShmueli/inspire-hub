@@ -1351,8 +1351,8 @@ const Questionnaire = () => {
                     : "Type your answer and press Enter..."
                 }
                 disabled={isSubmitting}
-                className="flex-1 min-h-[52px] max-h-32 px-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none"
-                rows={1}
+                className="flex-1 min-h-[120px] max-h-48 px-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none"
+                rows={4}
               />
               <Button
                 variant="hero"
