@@ -968,12 +968,12 @@ const Dashboard = () => {
                   <label className="text-sm font-medium text-muted-foreground">
                     Description (optional)
                   </label>
-                  <input
-                    type="text"
+                  <textarea
                     value={projectDescription}
                     onChange={(e) => setProjectDescription(e.target.value)}
-                    placeholder="Brief description of your project"
-                    className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                    placeholder="Brief description of your project goals, target users, and key features..."
+                    className="w-full min-h-[120px] px-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none"
+                    rows={4}
                   />
                 </div>
               </div>
