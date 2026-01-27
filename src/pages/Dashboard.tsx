@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -69,6 +69,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
+  const projectDescriptionRef = useRef<HTMLTextAreaElement>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [activeTab, setActiveTab] = useState("completed");
@@ -158,6 +159,22 @@ const Dashboard = () => {
 
     fetchSessions();
   }, []);
+
+  // Prevent the description textarea from collapsing on first mount after SPA navigation.
+  useLayoutEffect(() => {
+    if (!showNewProject) return;
+    const el = projectDescriptionRef.current;
+    if (!el) return;
+
+    const apply = () => {
+      el.style.setProperty("min-height", "120px", "important");
+      el.style.setProperty("height", "120px", "important");
+    };
+
+    apply();
+    const raf = requestAnimationFrame(apply);
+    return () => cancelAnimationFrame(raf);
+  }, [showNewProject]);
 
   const handleCreateProject = async () => {
     if (!projectName.trim()) {
@@ -944,8 +961,8 @@ const Dashboard = () => {
           {/* New Project Form */}
           {showNewProject && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
               className="bg-card border border-border/50 rounded-2xl p-6 space-y-4"
             >
               <h2 className="text-xl font-semibold">Create New Project</h2>
@@ -969,10 +986,11 @@ const Dashboard = () => {
                     Description (optional)
                   </label>
                   <textarea
+                    ref={projectDescriptionRef}
                     value={projectDescription}
                     onChange={(e) => setProjectDescription(e.target.value)}
                     placeholder="Brief description of your project goals, target users, and key features..."
-                    className="w-full min-h-[120px] px-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none"
                     rows={4}
                   />
                 </div>
