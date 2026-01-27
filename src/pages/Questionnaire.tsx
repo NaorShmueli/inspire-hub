@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -27,7 +27,6 @@ import type {
 } from "@/lib/api-types";
 import { getCachedFoundationQuestions } from "@/lib/foundation-question-cache";
 import { DomainAnalysisPanel } from "@/components/DomainAnalysisPanel";
-import { useForceTextareaHeight } from "@/hooks/use-force-textarea-height";
 
 interface ResumeData {
   rounds: ConversationRounds[];
@@ -323,11 +322,22 @@ const Questionnaire = () => {
   const [showDomainApproval, setShowDomainApproval] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
 
-  useForceTextareaHeight(
-    inputRef,
-    { heightPx: 120, rows: 4, enabled: !showDomainApproval },
-    [sessionId, showDomainApproval, messages.length]
-  );
+  // Ensure the composer never collapses to a single-row height on SPA navigation.
+  // We set inline styles with `important` to win against any late-applied CSS.
+  useLayoutEffect(() => {
+    if (showDomainApproval) return;
+    const el = inputRef.current;
+    if (!el) return;
+
+    const apply = () => {
+      el.style.setProperty("min-height", "120px", "important");
+      el.style.setProperty("height", "120px", "important");
+    };
+
+    apply();
+    const raf = requestAnimationFrame(apply);
+    return () => cancelAnimationFrame(raf);
+  }, [sessionId, showDomainApproval, messages.length]);
 
   // Helper to fetch session metadata and check confidence score
   const checkConfidenceFromMetadata = async (): Promise<{
