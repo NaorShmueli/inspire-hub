@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -63,6 +63,7 @@ import type {
 
 import { DomainAnalysisPanel } from "@/components/DomainAnalysisPanel";
 import logo from "@/assets/logo.jpg";
+import { useForceTextareaHeight } from "@/hooks/use-force-textarea-height";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -160,21 +161,11 @@ const Dashboard = () => {
     fetchSessions();
   }, []);
 
-  // Prevent the description textarea from collapsing on first mount after SPA navigation.
-  useLayoutEffect(() => {
-    if (!showNewProject) return;
-    const el = projectDescriptionRef.current;
-    if (!el) return;
-
-    const apply = () => {
-      el.style.setProperty("min-height", "120px", "important");
-      el.style.setProperty("height", "120px", "important");
-    };
-
-    apply();
-    const raf = requestAnimationFrame(apply);
-    return () => cancelAnimationFrame(raf);
-  }, [showNewProject]);
+  useForceTextareaHeight(
+    projectDescriptionRef,
+    { heightPx: 120, rows: 4, enabled: showNewProject },
+    [showNewProject]
+  );
 
   const handleCreateProject = async () => {
     if (!projectName.trim()) {
