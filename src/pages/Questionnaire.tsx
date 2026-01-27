@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -297,6 +297,22 @@ const Questionnaire = () => {
   const navigate = useNavigate();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Ensure the composer never collapses to a single-row height on SPA navigation.
+  // We set inline styles with `important` to win against any late-applied CSS.
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+
+    const apply = () => {
+      el.style.setProperty("min-height", "120px", "important");
+      el.style.setProperty("height", "120px", "important");
+    };
+
+    apply();
+    const raf = requestAnimationFrame(apply);
+    return () => cancelAnimationFrame(raf);
+  }, [sessionId]);
 
   const [session, setSession] = useState<ConversationSession | null>(
     location.state?.session || null
