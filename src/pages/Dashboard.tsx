@@ -991,6 +991,7 @@ const Dashboard = () => {
                     onChange={(e) => setProjectDescription(e.target.value)}
                     placeholder="Brief description of your project goals, target users, and key features..."
                     className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none"
+                    style={{ minHeight: 120, height: 120 }}
                     rows={4}
                   />
                 </div>

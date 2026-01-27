@@ -1369,6 +1369,7 @@ const Questionnaire = () => {
                 }
                 disabled={isSubmitting}
                 className="flex-1 px-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none"
+                style={{ minHeight: 120, height: 120 }}
                 rows={4}
               />
               <Button
